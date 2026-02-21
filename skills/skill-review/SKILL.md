@@ -133,3 +133,5 @@ For each selected item, make the edit directly (using file editing tools), then 
 For the rationale behind each validation check, read `references/validation_rules.md`.
 
 For the full knowledge base of improvement patterns with examples, read `references/improvement_patterns.md`.
+
+For skill design conventions and quick reference, read `references/best_practices.md`.

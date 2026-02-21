@@ -96,6 +96,10 @@ After successful generation, tell the user:
 
 5. **Ready to publish?** — Use the `skill-publish` skill (if installed) to wrap this into a complete GitHub repo with README, LICENSE, plugin.json, and marketplace.json.
 
-## Best Practices Reference
+## References
 
-For deeper questions about skill design — output formats, error handling patterns, environment strategies, preflight conventions — read `references/best_practices.md`.
+For skill design conventions — output formats, error handling, environment strategies, preflight conventions — read `references/best_practices.md`.
+
+For common quality issues and how to avoid them, read `references/improvement_patterns.md`.
+
+For what automated validation checks will be run (by skill-review), read `references/validation_rules.md`.

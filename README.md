@@ -63,6 +63,7 @@ better-skills/
 │   ├── plugin.json
 │   └── marketplace.json
 ├── skills/
+│   ├── references/            # Shared knowledge base (symlinked into each skill)
 │   ├── skill-creator/        # L1: scaffold.py + templates
 │   ├── skill-review/         # L1: validate.py + analyze.sh
 │   └── skill-publish/        # L1: publish.py + templates
