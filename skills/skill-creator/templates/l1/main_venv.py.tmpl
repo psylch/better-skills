@@ -1,0 +1,119 @@
+#!/usr/bin/env python3
+"""{{SKILL_NAME}} — TODO: brief description.
+
+Run with: bash scripts/run.sh <command>
+The run.sh wrapper activates the venv automatically.
+
+All commands output JSON to stdout.
+Errors output JSON to stderr with exit code 1 (recoverable) or 2 (fatal).
+"""
+
+import argparse
+import json
+import os
+import sys
+from pathlib import Path
+
+
+def output(data):
+    """Write structured result to stdout."""
+    print(json.dumps(data, ensure_ascii=False, indent=2))
+
+
+def error(code, hint, recoverable=True):
+    """Write structured error to stderr and exit."""
+    print(json.dumps({
+        "error": code,
+        "hint": hint,
+        "recoverable": recoverable,
+    }, ensure_ascii=False), file=sys.stderr)
+    sys.exit(1 if recoverable else 2)
+
+
+def cmd_preflight(args):
+    """Check environment readiness."""
+    script_dir = Path(__file__).resolve().parent
+    venv_dir = script_dir / '.venv'
+    env_file = Path.home() / '.claude' / '{{SKILL_NAME}}' / '.env'
+    deps = {}
+    creds = {}
+
+    # Check venv exists
+    if venv_dir.exists():
+        deps["venv"] = {"status": "ok"}
+    else:
+        deps["venv"] = {"status": "missing", "hint": "Run: bash scripts/run.sh setup"}
+
+    # Check .env exists
+    if env_file.exists():
+        creds["env_file"] = {"status": "configured"}
+    else:
+        creds["env_file"] = {
+            "status": "not_configured",
+            "hint": f"Copy .env.example to {env_file} and fill in your credentials",
+            "required": True,
+        }
+
+    ready = venv_dir.exists()  # .env might be optional depending on your skill
+    output({
+        "ready": ready,
+        "dependencies": deps,
+        "credentials": creds,
+        "services": {},
+    })
+
+
+def cmd_setup(args):
+    """First-time setup: create venv and install dependencies."""
+    import subprocess
+    script_dir = Path(__file__).resolve().parent
+    venv_dir = script_dir / '.venv'
+    requirements = script_dir / 'requirements.txt'
+
+    if not venv_dir.exists():
+        subprocess.run([sys.executable, '-m', 'venv', str(venv_dir)], check=True)
+
+    if requirements.exists():
+        pip = venv_dir / 'bin' / 'pip'
+        subprocess.run([str(pip), 'install', '-r', str(requirements)], check=True)
+
+    # Create config directory
+    config_dir = Path.home() / '.claude' / '{{SKILL_NAME}}'
+    config_dir.mkdir(parents=True, exist_ok=True)
+
+    output({"status": "ok", "hint": f"Venv created. Edit {config_dir / '.env'} to add credentials."})
+
+
+# TODO: Add your business commands below.
+
+
+def main():
+    parser = argparse.ArgumentParser(description="{{SKILL_NAME_TITLE}}")
+    parser.add_argument('--format', choices=['concise', 'detailed', 'json'],
+                        default='concise', help='Output format (default: concise)')
+    parser.add_argument('--limit', type=int, default=10, help='Max results to return (default: 10)')
+
+    sub = parser.add_subparsers(dest="command")
+    sub.add_parser("preflight", help="Check environment readiness")
+    sub.add_parser("setup", help="First-time setup")
+    # TODO: Register your business subcommands here.
+
+    args = parser.parse_args()
+    if not args.command:
+        parser.print_help()
+        sys.exit(2)
+
+    commands = {
+        "preflight": cmd_preflight,
+        "setup": cmd_setup,
+    }
+
+    handler = commands.get(args.command)
+    if handler:
+        handler(args)
+    else:
+        error("unknown_command", f"Unknown command: {args.command}", recoverable=False)
+
+
+if __name__ == "__main__":
+    main()

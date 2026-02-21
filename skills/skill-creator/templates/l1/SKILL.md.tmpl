@@ -1,0 +1,81 @@
+---
+name: {{SKILL_NAME}}
+description: "TODO: Describe what this skill does, when to use it, and include trigger phrases (both English and Chinese if applicable). Write in third person. This description determines when Claude activates the skill — be specific."
+---
+
+# {{SKILL_NAME_TITLE}}
+
+TODO: Brief description of what this skill does and how it works.
+
+## Workflow
+
+TODO: Define the step-by-step workflow Claude should follow when this skill is triggered.
+
+1. Run preflight check
+2. If not ready, guide user through setup
+3. Execute business logic
+4. Present results to user
+
+## Runtime
+
+### Preflight
+
+Before executing any business command, check environment readiness:
+
+```bash
+python3 scripts/main.py preflight
+```
+
+Output is standard JSON:
+```json
+{
+  "ready": true|false,
+  "dependencies": {"<name>": {"status": "ok|missing", "hint": "..."}},
+  "credentials": {"<name>": {"status": "configured|not_configured", "hint": "...", "required": true|false}},
+  "services": {"<name>": {"status": "running|not_running", "hint": "..."}}
+}
+```
+
+If `ready` is `false`, follow `hint` fields to guide the user. Do not ask for passwords or API keys in chat — direct users to edit configuration files.
+
+### Setup (first run)
+
+**Automatic steps** (Claude executes):
+1. TODO: List steps Claude can do automatically (install deps, create dirs, etc.)
+
+**Manual steps** (guide user):
+1. TODO: List steps that require user action (edit .env, login to service, etc.)
+
+Run setup: `python3 scripts/main.py setup`
+
+### Credentials
+
+TODO: List all credentials this skill needs.
+
+| Credential | Location | Required | How to obtain |
+|------------|----------|----------|---------------|
+| TODO | ~/.claude/{{SKILL_NAME}}/.env | Yes/No | TODO |
+
+### Degradation
+
+TODO: Define behavior when optional dependencies are unavailable.
+
+| Dependency | Required | Behavior when unavailable |
+|------------|----------|--------------------------|
+| TODO | Yes/No | Skip / Fallback / Halt |
+
+## Script Commands
+
+| Command | Purpose | Example |
+|---------|---------|---------|
+| `preflight` | Check environment readiness | `python3 scripts/main.py preflight` |
+| `setup` | First-time setup | `python3 scripts/main.py setup` |
+| TODO | TODO | `python3 scripts/main.py TODO` |
+
+All commands output JSON to stdout. Errors go to stderr as JSON with `error`, `hint`, and `recoverable` fields.
+
+## Troubleshooting
+
+| Symptom | Resolution |
+|---------|------------|
+| TODO | TODO |

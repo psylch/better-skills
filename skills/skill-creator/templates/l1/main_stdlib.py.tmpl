@@ -1,0 +1,89 @@
+#!/usr/bin/env python3
+"""{{SKILL_NAME}} — TODO: brief description.
+
+All commands output JSON to stdout.
+Errors output JSON to stderr with exit code 1 (recoverable) or 2 (fatal).
+"""
+
+import argparse
+import json
+import sys
+
+
+def output(data):
+    """Write structured result to stdout."""
+    print(json.dumps(data, ensure_ascii=False, indent=2))
+
+
+def error(code, hint, recoverable=True):
+    """Write structured error to stderr and exit."""
+    print(json.dumps({
+        "error": code,
+        "hint": hint,
+        "recoverable": recoverable,
+    }, ensure_ascii=False), file=sys.stderr)
+    sys.exit(1 if recoverable else 2)
+
+
+def cmd_preflight(args):
+    """Check environment readiness."""
+    # TODO: Add actual checks for dependencies, credentials, services.
+    # Set ready=False and provide hints when something is missing.
+    output({
+        "ready": True,
+        "dependencies": {},
+        "credentials": {},
+        "services": {},
+    })
+
+
+def cmd_setup(args):
+    """First-time setup."""
+    # TODO: Implement setup logic (create config dirs, install deps, etc.)
+    output({"status": "ok", "hint": "Setup complete"})
+
+
+# TODO: Add your business commands below.
+# Example:
+#
+# def cmd_search(args):
+#     """Search for something."""
+#     results = do_search(args.query, limit=args.limit)
+#     output({
+#         "status": "ok",
+#         "results": results,
+#         "hint": f"Found {len(results)} results",
+#     })
+
+
+def main():
+    parser = argparse.ArgumentParser(description="{{SKILL_NAME_TITLE}}")
+    parser.add_argument('--format', choices=['concise', 'detailed', 'json'],
+                        default='concise', help='Output format (default: concise)')
+    parser.add_argument('--limit', type=int, default=10, help='Max results to return (default: 10)')
+
+    sub = parser.add_subparsers(dest="command")
+    sub.add_parser("preflight", help="Check environment readiness")
+    sub.add_parser("setup", help="First-time setup")
+    # TODO: Register your business subcommands here.
+
+    args = parser.parse_args()
+    if not args.command:
+        parser.print_help()
+        sys.exit(2)
+
+    commands = {
+        "preflight": cmd_preflight,
+        "setup": cmd_setup,
+        # TODO: Add your commands to this map.
+    }
+
+    handler = commands.get(args.command)
+    if handler:
+        handler(args)
+    else:
+        error("unknown_command", f"Unknown command: {args.command}", recoverable=False)
+
+
+if __name__ == "__main__":
+    main()

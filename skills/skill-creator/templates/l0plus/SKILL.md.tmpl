@@ -1,0 +1,44 @@
+---
+name: {{SKILL_NAME}}
+description: "TODO: Describe what this skill does, when to use it, and include trigger phrases (both English and Chinese if applicable). Write in third person. This description determines when Claude activates the skill — be specific."
+---
+
+# {{SKILL_NAME_TITLE}}
+
+TODO: Brief description of what this skill does and how it works.
+
+## Workflow
+
+TODO: Define the step-by-step workflow Claude should follow when this skill is triggered.
+
+1. Step 1
+2. Step 2
+3. Step 3
+
+## Runtime
+
+### Preflight
+
+Before starting the workflow, run the helper script to check environment readiness:
+
+```bash
+bash scripts/helper.sh preflight
+```
+
+Output is JSON. If `ready` is `true`, proceed with the workflow. If `false`, follow the `hint` field to guide the user through resolving the issue.
+
+### Degradation
+
+TODO: Define which capabilities can be skipped when their dependencies are unavailable, and which are hard requirements that should halt execution.
+
+| Dependency | Required | Behavior when unavailable |
+|------------|----------|--------------------------|
+| TODO | Yes/No | TODO |
+
+## Troubleshooting
+
+TODO: Common issues and how Claude should handle them.
+
+| Symptom | Resolution |
+|---------|------------|
+| TODO | TODO |
