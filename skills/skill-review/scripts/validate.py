@@ -100,7 +100,7 @@ def checks_structure(skill_path, content, fm):
 
     # Check for unexpected top-level directories
     expected_dirs = {"scripts", "references", "templates", "assets"}
-    actual_dirs = {d.name for d in skill_path.iterdir() if d.is_dir()}
+    actual_dirs = {d.name for d in skill_path.iterdir() if d.is_dir() and not d.name.startswith(".")}
     unexpected = actual_dirs - expected_dirs
     if unexpected:
         results.append(check_result("directory_layout", "structure", "warn",
