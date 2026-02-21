@@ -376,7 +376,7 @@ def checks_security(skill_path, content):
     real_emails = [e for e in emails if e not in non_pii and "example" not in e.lower()]
     if real_emails:
         results.append(check_result("no_pii", "security", "warn",
-                                    f"Possible PII (email addresses): {', '.join(set(real_emails)[:3])}",
+                                    f"Possible PII (email addresses): {', '.join(list(set(real_emails))[:3])}",
                                     "Remove personal email addresses for public distribution"))
     else:
         results.append(check_result("no_pii", "security", "pass",

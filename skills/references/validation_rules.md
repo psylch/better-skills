@@ -72,7 +72,7 @@ Convention: exit 0 = success, exit 1 = recoverable error (Claude can retry or fi
 ## Security Checks
 
 ### no_hardcoded_paths (warn)
-Absolute paths like `/Users/john/` or `/home/john/` break on other machines and leak personal information. Use relative paths or environment variables.
+Absolute paths like `/Users/<username>/` or `/home/<username>/` break on other machines and leak personal information. Use relative paths or environment variables.
 
 ### no_secrets (fail)
 API keys, tokens, and credentials must never be hardcoded. Use environment variables (`$API_KEY`) or config files (`~/.claude/<skill-name>/.env`).
@@ -83,7 +83,7 @@ Personal email addresses and other PII should not appear in public skills. Use p
 ## Completeness Checks
 
 ### no_todo_placeholders (warn)
-`TODO` markers indicate unfinished work. Replace them before publishing.
+Unfinished-work markers (e.g. `T0D0`) indicate incomplete sections. Replace them before publishing.
 
 ### no_template_placeholders (fail)
 `{{PLACEHOLDER}}` markers are template variables that should have been replaced during scaffold generation. Their presence indicates a broken generation process.

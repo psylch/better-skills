@@ -178,17 +178,29 @@ def cmd_generate(args):
         dest_path.write_text(rendered, encoding='utf-8')
         created.append(dest_name)
 
-    output({
-        "status": "ok",
-        "output_dir": str(repo_dir),
-        "repo": f"{args.owner}/{args.repo}",
-        "created": created,
-        "hint": (f"Repository files generated at {repo_dir}.\n"
-                 f"Next steps:\n"
-                 f"  1. Review and polish README.md / README.zh.md\n"
-                 f"  2. Run: cd {repo_dir} && git init && git add . && git commit -m 'Initial commit'\n"
-                 f"  3. Optional: gh repo create {args.owner}/{args.repo} --public --source . --push"),
-    })
+    hint = (f"Repository files generated at {repo_dir}.\n"
+             f"Next steps:\n"
+             f"  1. Review and polish README.md / README.zh.md\n"
+             f"  2. Run: cd {repo_dir} && git init && git add . && git commit -m 'Initial commit'\n"
+             f"  3. Optional: gh repo create {args.owner}/{args.repo} --public --source . --push")
+
+    fmt = getattr(args, "fmt", "detailed")
+    if fmt == "concise":
+        output({
+            "status": "ok",
+            "output_dir": str(repo_dir),
+            "repo": f"{args.owner}/{args.repo}",
+            "file_count": len(created),
+            "hint": hint,
+        })
+    else:
+        output({
+            "status": "ok",
+            "output_dir": str(repo_dir),
+            "repo": f"{args.owner}/{args.repo}",
+            "created": created,
+            "hint": hint,
+        })
 
 
 def cmd_preflight(_args):
@@ -234,6 +246,8 @@ def main():
     gen.add_argument("--license", choices=["mit", "apache2", "gpl3"], default="mit",
                      help="License type (default: mit)")
     gen.add_argument("--output", help="Output parent directory (default: skill's grandparent)")
+    gen.add_argument("--format", dest="fmt", choices=["concise", "detailed"], default="detailed",
+                     help="Output format: concise (file count only) or detailed (full file list, default)")
     gen.add_argument("--force", action="store_true", help="Overwrite existing repo directory")
 
     args = parser.parse_args()

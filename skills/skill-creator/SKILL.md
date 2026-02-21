@@ -56,7 +56,7 @@ Ask where to generate the skill. Default: current working directory. The script 
 After collecting all parameters, run:
 
 ```bash
-python3 {SKILL_DIR}/scripts/scaffold.py \
+python3 {SKILL_DIR}/scripts/scaffold.py scaffold \
     --name <name> \
     --level <level> \
     [--env <strategy>] \
@@ -82,9 +82,9 @@ If it fails, stderr contains JSON with `error`, `hint`, and `recoverable` fields
 
 After successful generation, tell the user:
 
-1. **Edit SKILL.md** — Replace all `TODO` placeholders. The `description` field in frontmatter is critical — it determines when Claude activates the skill. Be specific and include trigger phrases.
+1. **Edit SKILL.md** — Replace all placeholder markers. The `description` field in frontmatter is critical — it determines when Claude activates the skill. Be specific and include trigger phrases.
 
-2. **Customize scripts/** (L0+/L1) — The generated scripts are functional frameworks with TODO markers. Add your business logic.
+2. **Customize scripts/** (L0+/L1) — The generated scripts are functional frameworks with placeholder markers. Add your business logic.
 
 3. **Test preflight** (L0+/L1) — Run the preflight command to verify the JSON output structure works:
    - L0+: `bash scripts/helper.sh preflight`

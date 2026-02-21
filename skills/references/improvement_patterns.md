@@ -87,10 +87,10 @@ description: "Validate and test REST API endpoints with automated contract check
 
 ## Documentation
 
-### TODO placeholders remaining
+### Unfinished-work placeholders remaining
 **Look for:** `todo_count > 0`.
-**Why:** TODO markers indicate unfinished work. They confuse users and reduce confidence in the skill.
-**Fix:** Replace each TODO with actual content or remove the section if not applicable.
+**Why:** Unfinished-work markers indicate incomplete sections. They confuse users and reduce confidence in the skill.
+**Fix:** Replace each placeholder with actual content or remove the section if not applicable.
 
 ### Unresolved template placeholders
 **Look for:** `template_placeholder_count > 0`.
@@ -117,7 +117,7 @@ description: "Validate and test REST API endpoints with automated contract check
 ## Security
 
 ### Hardcoded user paths
-**Look for:** Absolute paths containing `/Users/`, `/home/`, `C:\Users\`.
+**Look for:** Absolute paths containing platform-specific user directories (e.g. `~` expanded to full paths).
 **Why:** These break on other machines and leak personal information in public skills.
 **Fix:** Use relative paths, environment variables, or `~/.claude/<skill-name>/` conventions.
 

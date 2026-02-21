@@ -2,161 +2,246 @@
 # Skill profile analyzer for skill-iterate.
 # Extracts structured facts about a skill directory as JSON.
 #
-# Usage: analyze.sh <skill-path>
+# Usage:
+#     analyze.sh preflight
+#     analyze.sh analyze <skill-path> [--format concise|detailed]
 #
 # Output: JSON profile to stdout, errors to stderr.
 
 set -uo pipefail
 
-if [ $# -lt 1 ]; then
-    echo '{"error": "missing_path", "hint": "Usage: analyze.sh <skill-path>", "recoverable": true}' >&2
-    exit 1
-fi
+# ---------------------------------------------------------------------------
+# Subcommand dispatch
+# ---------------------------------------------------------------------------
 
-SKILL_PATH="$(cd "$1" 2>/dev/null && pwd)" || {
-    echo "{\"error\": \"invalid_path\", \"hint\": \"Not a valid directory: $1\", \"recoverable\": true}" >&2
-    exit 1
+cmd_preflight() {
+    # Check required tools
+    local deps='{'
+    local all_ok=true
+
+    for tool in bash grep sed wc; do
+        if command -v "$tool" >/dev/null 2>&1; then
+            deps="$deps\"$tool\": {\"status\": \"ok\"}, "
+        else
+            deps="$deps\"$tool\": {\"status\": \"missing\"}, "
+            all_ok=false
+        fi
+    done
+
+    # Remove trailing comma+space and close brace
+    deps="${deps%, }"
+    deps="$deps}"
+
+    local ready="true"
+    if [ "$all_ok" = false ]; then
+        ready="false"
+    fi
+
+    cat <<ENDJSON
+{
+  "ready": $ready,
+  "dependencies": $deps,
+  "credentials": {},
+  "services": {}
+}
+ENDJSON
 }
 
-SKILL_MD="$SKILL_PATH/SKILL.md"
+cmd_analyze() {
+    local FORMAT="detailed"
 
-if [ ! -f "$SKILL_MD" ]; then
-    echo "{\"error\": \"no_skill_md\", \"hint\": \"SKILL.md not found in $SKILL_PATH\", \"recoverable\": true}" >&2
-    exit 1
-fi
-
-# --- Extract frontmatter fields ---
-NAME=""
-DESC=""
-in_frontmatter=false
-frontmatter_found=false
-
-while IFS= read -r line; do
-    if [ "$line" = "---" ]; then
-        if [ "$frontmatter_found" = false ]; then
-            in_frontmatter=true
-            frontmatter_found=true
-            continue
-        else
-            break
-        fi
+    # Parse arguments
+    if [ $# -lt 1 ]; then
+        echo '{"error": "missing_path", "hint": "Usage: analyze.sh analyze <skill-path> [--format concise|detailed]", "recoverable": true}' >&2
+        exit 1
     fi
-    if [ "$in_frontmatter" = true ]; then
-        case "$line" in
-            name:*)
-                NAME="$(echo "$line" | sed 's/^name:[[:space:]]*//' | sed 's/^["'\'']//' | sed 's/["'\'']$//')"
+
+    local SKILL_ARG="$1"
+    shift
+
+    # Parse optional flags
+    while [ $# -gt 0 ]; do
+        case "$1" in
+            --format)
+                if [ $# -lt 2 ]; then
+                    echo '{"error": "missing_format_value", "hint": "Usage: --format concise|detailed", "recoverable": true}' >&2
+                    exit 1
+                fi
+                FORMAT="$2"
+                shift 2
                 ;;
-            description:*)
-                DESC="$(echo "$line" | sed 's/^description:[[:space:]]*//' | sed 's/^["'\'']//' | sed 's/["'\'']$//')"
+            *)
+                echo "{\"error\": \"unknown_flag\", \"hint\": \"Unknown flag: $1\", \"recoverable\": true}" >&2
+                exit 1
                 ;;
         esac
+    done
+
+    SKILL_PATH="$(cd "$SKILL_ARG" 2>/dev/null && pwd)" || {
+        echo "{\"error\": \"invalid_path\", \"hint\": \"Not a valid directory: $SKILL_ARG\", \"recoverable\": true}" >&2
+        exit 1
+    }
+
+    SKILL_MD="$SKILL_PATH/SKILL.md"
+
+    if [ ! -f "$SKILL_MD" ]; then
+        echo "{\"error\": \"no_skill_md\", \"hint\": \"SKILL.md not found in $SKILL_PATH\", \"recoverable\": false}" >&2
+        exit 2
     fi
-done < "$SKILL_MD"
 
-DESC_LEN=${#DESC}
+    # --- Extract frontmatter fields ---
+    NAME=""
+    DESC=""
+    in_frontmatter=false
+    frontmatter_found=false
 
-# --- Detect skill level ---
-LEVEL="l0"
-HAS_SCRIPTS=false
-HAS_REFERENCES=false
-SCRIPT_FILES="[]"
-REFERENCE_FILES="[]"
+    while IFS= read -r line; do
+        if [ "$line" = "---" ]; then
+            if [ "$frontmatter_found" = false ]; then
+                in_frontmatter=true
+                frontmatter_found=true
+                continue
+            else
+                break
+            fi
+        fi
+        if [ "$in_frontmatter" = true ]; then
+            case "$line" in
+                name:*)
+                    NAME="$(echo "$line" | sed 's/^name:[[:space:]]*//' | sed 's/^["'\'']//' | sed 's/["'\'']$//')"
+                    ;;
+                description:*)
+                    DESC="$(echo "$line" | sed 's/^description:[[:space:]]*//' | sed 's/^["'\'']//' | sed 's/["'\'']$//')"
+                    ;;
+            esac
+        fi
+    done < "$SKILL_MD"
 
-if [ -d "$SKILL_PATH/scripts" ]; then
-    HAS_SCRIPTS=true
-    # Collect script filenames
-    SCRIPT_LIST=""
-    for f in "$SKILL_PATH/scripts"/*; do
-        [ -f "$f" ] || continue
-        fname="$(basename "$f")"
-        SCRIPT_LIST="${SCRIPT_LIST:+$SCRIPT_LIST, }\"scripts/$fname\""
-    done
-    SCRIPT_FILES="[${SCRIPT_LIST}]"
+    DESC_LEN=${#DESC}
 
-    # Detect level by script type
-    if compgen -G "$SKILL_PATH/scripts/*.py" >/dev/null 2>&1; then
-        LEVEL="l1"
-    elif compgen -G "$SKILL_PATH/scripts/*.sh" >/dev/null 2>&1; then
-        LEVEL="l0plus"
-    fi
-fi
+    # --- Detect skill level ---
+    LEVEL="l0"
+    HAS_SCRIPTS=false
+    HAS_REFERENCES=false
+    SCRIPT_FILES="[]"
+    REFERENCE_FILES="[]"
 
-if [ -d "$SKILL_PATH/references" ]; then
-    HAS_REFERENCES=true
-    REF_LIST=""
-    for f in "$SKILL_PATH/references"/*; do
-        [ -f "$f" ] || continue
-        fname="$(basename "$f")"
-        [ "$fname" = ".gitkeep" ] && continue
-        REF_LIST="${REF_LIST:+$REF_LIST, }\"references/$fname\""
-    done
-    REFERENCE_FILES="[${REF_LIST}]"
-fi
+    if [ -d "$SKILL_PATH/scripts" ]; then
+        HAS_SCRIPTS=true
+        # Collect script filenames
+        SCRIPT_LIST=""
+        for f in "$SKILL_PATH/scripts"/*; do
+            [ -f "$f" ] || continue
+            fname="$(basename "$f")"
+            SCRIPT_LIST="${SCRIPT_LIST:+$SCRIPT_LIST, }\"scripts/$fname\""
+        done
+        SCRIPT_FILES="[${SCRIPT_LIST}]"
 
-# --- Count lines ---
-TOTAL_LINES=$(wc -l < "$SKILL_MD" | tr -d ' ')
-
-SCRIPT_TOTAL_LINES=0
-if [ "$HAS_SCRIPTS" = true ]; then
-    for f in "$SKILL_PATH/scripts"/*; do
-        [ -f "$f" ] || continue
-        lines=$(wc -l < "$f" | tr -d ' ')
-        SCRIPT_TOTAL_LINES=$((SCRIPT_TOTAL_LINES + lines))
-    done
-fi
-
-# --- Extract markdown sections (## headings) ---
-SECTIONS=""
-while IFS= read -r line; do
-    heading="$(echo "$line" | sed 's/^##[[:space:]]*//')"
-    SECTIONS="${SECTIONS:+$SECTIONS, }\"$heading\""
-done < <(grep '^## ' "$SKILL_MD")
-SECTIONS="[${SECTIONS}]"
-
-# --- Feature detection in SKILL.md content ---
-CONTENT="$(cat "$SKILL_MD")"
-
-has_pattern() {
-    grep -qi "$1" "$SKILL_MD" && echo true || echo false
-}
-
-HAS_PREFLIGHT=$(has_pattern "preflight")
-HAS_SETUP=$(has_pattern "setup")
-HAS_DEGRADATION=$(has_pattern "degradation")
-HAS_TROUBLESHOOTING=$(has_pattern "troubleshooting")
-HAS_CREDENTIAL_TABLE=$(has_pattern "credential")
-
-# --- TODO count ---
-TODO_COUNT=$(grep -c -i '\bTODO\b' "$SKILL_MD" 2>/dev/null || true)
-TODO_COUNT=${TODO_COUNT:-0}
-
-# --- Template placeholder count ---
-TEMPLATE_COUNT=$(grep -c -E '\{\{[A-Z_]+\}\}' "$SKILL_MD" 2>/dev/null || true)
-TEMPLATE_COUNT=${TEMPLATE_COUNT:-0}
-
-# --- Detect environment strategy (L1 only) ---
-ENV_STRATEGY="none"
-if [ "$LEVEL" = "l1" ]; then
-    ENV_STRATEGY="stdlib"
-    # Check for uv (PEP 723 header) or venv (run.sh wrapper exists)
-    if [ -f "$SKILL_PATH/scripts/main.py" ]; then
-        if grep -q '# /// script' "$SKILL_PATH/scripts/main.py" 2>/dev/null; then
-            ENV_STRATEGY="uv"
+        # Detect level by script type
+        if compgen -G "$SKILL_PATH/scripts/*.py" >/dev/null 2>&1; then
+            LEVEL="l1"
+        elif compgen -G "$SKILL_PATH/scripts/*.sh" >/dev/null 2>&1; then
+            LEVEL="l0plus"
         fi
     fi
-    if [ -f "$SKILL_PATH/scripts/run.sh" ]; then
-        ENV_STRATEGY="venv"
+
+    if [ -d "$SKILL_PATH/references" ]; then
+        HAS_REFERENCES=true
+        REF_LIST=""
+        for f in "$SKILL_PATH/references"/*; do
+            [ -f "$f" ] || continue
+            fname="$(basename "$f")"
+            [ "$fname" = ".gitkeep" ] && continue
+            REF_LIST="${REF_LIST:+$REF_LIST, }\"references/$fname\""
+        done
+        REFERENCE_FILES="[${REF_LIST}]"
     fi
-fi
 
-# --- Detect trigger phrases in description ---
-HAS_TRIGGER_PHRASES=false
-if echo "$DESC" | grep -qiE "use when|should be used|when the user says|trigger"; then
-    HAS_TRIGGER_PHRASES=true
-fi
+    # --- Count lines ---
+    TOTAL_LINES=$(wc -l < "$SKILL_MD" | tr -d ' ')
 
-# --- Output JSON ---
-cat <<ENDJSON
+    SCRIPT_TOTAL_LINES=0
+    if [ "$HAS_SCRIPTS" = true ]; then
+        for f in "$SKILL_PATH/scripts"/*; do
+            [ -f "$f" ] || continue
+            lines=$(wc -l < "$f" | tr -d ' ')
+            SCRIPT_TOTAL_LINES=$((SCRIPT_TOTAL_LINES + lines))
+        done
+    fi
+
+    # --- TODO count ---
+    TODO_COUNT=$(grep -c -i '\bTODO\b' "$SKILL_MD" 2>/dev/null || true)
+    TODO_COUNT=${TODO_COUNT:-0}
+
+    # --- Concise format: key metrics only ---
+    if [ "$FORMAT" = "concise" ]; then
+        SCRIPT_COUNT=0
+        if [ "$HAS_SCRIPTS" = true ]; then
+            for f in "$SKILL_PATH/scripts"/*; do
+                [ -f "$f" ] || continue
+                SCRIPT_COUNT=$((SCRIPT_COUNT + 1))
+            done
+        fi
+        cat <<ENDJSON
+{
+  "status": "ok",
+  "ready": $frontmatter_found,
+  "level": "$LEVEL",
+  "script_count": $SCRIPT_COUNT,
+  "todo_count": $TODO_COUNT,
+  "hint": "Level: $LEVEL, $SCRIPT_COUNT script(s), $TODO_COUNT TODO(s)."
+}
+ENDJSON
+        return
+    fi
+
+    # --- Detailed format: full profile ---
+
+    # Extract markdown sections (## headings)
+    SECTIONS=""
+    while IFS= read -r line; do
+        heading="$(echo "$line" | sed 's/^##[[:space:]]*//')"
+        SECTIONS="${SECTIONS:+$SECTIONS, }\"$heading\""
+    done < <(grep '^## ' "$SKILL_MD")
+    SECTIONS="[${SECTIONS}]"
+
+    # Feature detection in SKILL.md content
+    has_pattern() {
+        grep -qi "$1" "$SKILL_MD" && echo true || echo false
+    }
+
+    HAS_PREFLIGHT=$(has_pattern "preflight")
+    HAS_SETUP=$(has_pattern "setup")
+    HAS_DEGRADATION=$(has_pattern "degradation")
+    HAS_TROUBLESHOOTING=$(has_pattern "troubleshooting")
+    HAS_CREDENTIAL_TABLE=$(has_pattern "credential")
+
+    # Template placeholder count
+    TEMPLATE_COUNT=$(grep -c -E '\{\{[A-Z_]+\}\}' "$SKILL_MD" 2>/dev/null || true)
+    TEMPLATE_COUNT=${TEMPLATE_COUNT:-0}
+
+    # Detect environment strategy (L1 only)
+    ENV_STRATEGY="none"
+    if [ "$LEVEL" = "l1" ]; then
+        ENV_STRATEGY="stdlib"
+        if [ -f "$SKILL_PATH/scripts/main.py" ]; then
+            if grep -q '# /// script' "$SKILL_PATH/scripts/main.py" 2>/dev/null; then
+                ENV_STRATEGY="uv"
+            fi
+        fi
+        if [ -f "$SKILL_PATH/scripts/run.sh" ]; then
+            ENV_STRATEGY="venv"
+        fi
+    fi
+
+    # Detect trigger phrases in description
+    HAS_TRIGGER_PHRASES=false
+    if echo "$DESC" | grep -qiE "use when|should be used|when the user says|trigger"; then
+        HAS_TRIGGER_PHRASES=true
+    fi
+
+    # --- Output JSON ---
+    cat <<ENDJSON
 {
   "status": "ok",
   "profile": {
@@ -184,3 +269,34 @@ cat <<ENDJSON
   "hint": "Skill profile extracted. Level: $LEVEL, $TOTAL_LINES lines, $TODO_COUNT TODO(s)."
 }
 ENDJSON
+}
+
+# ---------------------------------------------------------------------------
+# Main entry point
+# ---------------------------------------------------------------------------
+
+COMMAND="${1:-}"
+
+case "$COMMAND" in
+    preflight)
+        cmd_preflight
+        ;;
+    analyze)
+        shift
+        cmd_analyze "$@"
+        ;;
+    "")
+        echo '{"error": "missing_command", "hint": "Usage: analyze.sh <preflight|analyze> [args...]", "recoverable": true}' >&2
+        exit 1
+        ;;
+    *)
+        # Backward compat: if first arg looks like a path, treat as analyze
+        if [ -d "$COMMAND" ]; then
+            shift
+            cmd_analyze "$COMMAND" "$@"
+        else
+            echo "{\"error\": \"unknown_command\", \"hint\": \"Unknown command: $COMMAND. Use preflight or analyze.\", \"recoverable\": true}" >&2
+            exit 1
+        fi
+        ;;
+esac

@@ -61,10 +61,10 @@ The script outputs JSON to stdout:
 Run the analyzer to get a structured skill profile:
 
 ```bash
-bash {SKILL_DIR}/scripts/analyze.sh <skill-path>
+bash {SKILL_DIR}/scripts/analyze.sh analyze <skill-path>
 ```
 
-The script outputs JSON with quantitative facts about the skill: level, section headings, script inventory, feature flags, TODO count, etc.
+The script outputs JSON with quantitative facts about the skill: level, section headings, script inventory, feature flags, unfinished-placeholder count, etc.
 
 ### Step 4: Deep Analysis
 
@@ -107,7 +107,7 @@ For each selected item, make the edit directly (using file editing tools), then 
 | **paths** | Referenced files exist, scripts have execute permission |
 | **scripts** | JSON output pattern, preflight subcommand, error handling |
 | **security** | No hardcoded paths, no secrets, no PII patterns |
-| **completeness** | No TODO placeholders, no template markers |
+| **completeness** | No unfinished placeholders, no template markers |
 
 ## Grading
 

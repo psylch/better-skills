@@ -6,7 +6,8 @@ All user interaction happens through Claude's dialogue — this script only
 accepts CLI arguments and outputs JSON.
 
 Usage:
-    scaffold.py --name <name> --level l0|l0plus|l1 [--env stdlib|uv|venv] [--output <dir>] [--force]
+    scaffold.py preflight
+    scaffold.py scaffold --name <name> --level l0|l0plus|l1 [--env stdlib|uv|venv] [--output <dir>] [--force]
 """
 
 import argparse
@@ -160,20 +161,20 @@ def scaffold(name, level, env, output_dir, force, templates_dir):
     })
 
 
-def main():
-    parser = argparse.ArgumentParser(
-        description="Generate agent skill from templates",
-        formatter_class=argparse.RawDescriptionHelpFormatter,
-    )
-    parser.add_argument('--name', required=True, help='Skill name (kebab-case, e.g. my-awesome-skill)')
-    parser.add_argument('--level', required=True, choices=['l0', 'l0plus', 'l1'],
-                        help='Skill level: l0 (pure prompt), l0plus (prompt + helper), l1 (prompt + business scripts)')
-    parser.add_argument('--env', choices=['stdlib', 'uv', 'venv'], default='stdlib',
-                        help='Environment strategy for L1 skills (default: stdlib)')
-    parser.add_argument('--output', default='.', help='Output directory (default: current directory)')
-    parser.add_argument('--force', action='store_true', help='Overwrite existing skill directory')
-    args = parser.parse_args()
+def cmd_preflight(_args):
+    """Check environment readiness."""
+    output({
+        "ready": True,
+        "dependencies": {
+            "python3": {"status": "ok", "version": f"{sys.version_info.major}.{sys.version_info.minor}"}
+        },
+        "credentials": {},
+        "services": {},
+    })
 
+
+def cmd_scaffold(args):
+    """Run the scaffold command."""
     validate_name(args.name)
 
     if args.level != 'l1' and args.env != 'stdlib':
@@ -186,6 +187,35 @@ def main():
         error("templates_missing", f"Templates directory not found at {templates_dir}", recoverable=False)
 
     scaffold(args.name, args.level, args.env, args.output, args.force, templates_dir)
+
+
+def main():
+    parser = argparse.ArgumentParser(
+        description="Generate agent skill from templates",
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+    )
+    sub = parser.add_subparsers(dest="command")
+
+    sub.add_parser("preflight", help="Check environment readiness")
+
+    scaffold_parser = sub.add_parser("scaffold", help="Generate skill from templates")
+    scaffold_parser.add_argument('--name', required=True, help='Skill name (kebab-case, e.g. my-awesome-skill)')
+    scaffold_parser.add_argument('--level', required=True, choices=['l0', 'l0plus', 'l1'],
+                        help='Skill level: l0 (pure prompt), l0plus (prompt + helper), l1 (prompt + business scripts)')
+    scaffold_parser.add_argument('--env', choices=['stdlib', 'uv', 'venv'], default='stdlib',
+                        help='Environment strategy for L1 skills (default: stdlib)')
+    scaffold_parser.add_argument('--output', default='.', help='Output directory (default: current directory)')
+    scaffold_parser.add_argument('--force', action='store_true', help='Overwrite existing skill directory')
+
+    args = parser.parse_args()
+    if not args.command:
+        parser.print_help()
+        sys.exit(2)
+
+    if args.command == "preflight":
+        cmd_preflight(args)
+    elif args.command == "scaffold":
+        cmd_scaffold(args)
 
 
 if __name__ == '__main__':
