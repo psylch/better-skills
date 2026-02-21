@@ -2,15 +2,14 @@
 
 [English](README.md)
 
-一个 [Claude Code](https://docs.anthropic.com/en/docs/claude-code) 技能开发工具包 — 创建、验证、迭代和发布技能，内置运行时 UX 最佳实践。
+一个 [Claude Code](https://docs.anthropic.com/en/docs/claude-code) 技能开发工具包 — 创建、走查和发布技能，内置运行时 UX 最佳实践。
 
 ## 技能列表
 
 | 技能 | 用途 | 状态 |
 |------|------|------|
 | [**skill-creator**](skills/skill-creator/) | 从最佳实践模板创建新技能 | 可用 |
-| [**skill-validate**](skills/skill-validate/) | 验证技能结构和规范 | 可用 |
-| [**skill-iterate**](skills/skill-iterate/) | 分析运行时表现并改进 | 可用 |
+| [**skill-review**](skills/skill-review/) | 验证结构、建议改进并修复问题 | 可用 |
 | [**skill-publish**](skills/skill-publish/) | 包装并发布技能 | 可用 |
 
 ## 安装
@@ -40,13 +39,9 @@ git clone https://github.com/psylch/better-skills.git ~/.claude/skills/better-sk
 
 通过对话引导创建新技能 — 名称、层级（L0/L0+/L1）、环境策略（stdlib/uv/venv）、输出目录。生成的模板内置 preflight 框架、JSON 输出约定和错误处理。
 
-### skill-validate
+### skill-review
 
-跨 7 个类别执行 22+ 项自动检查：结构、命名、内容质量、路径完整性、脚本规范、安全性、完成度。输出评级报告（A–F）并附带修复建议。
-
-### skill-iterate
-
-结合自动化概况提取和 Claude 分析推理，识别质量问题和优化机会。按优先级给出建议并附 before/after 示例，支持交互式修复。
+结合自动化验证（7 类 22+ 项检查，A–F 评级）与基于最佳实践的分析建议。输出统一报告：评级、问题列表、按优先级排序的改进建议（附 before/after 示例），支持交互式修复。
 
 ### skill-publish
 
@@ -69,8 +64,7 @@ better-skills/
 │   └── marketplace.json
 ├── skills/
 │   ├── skill-creator/        # L1: scaffold.py + 模板
-│   ├── skill-validate/       # L1: validate.py
-│   ├── skill-iterate/        # L0+: analyze.sh
+│   ├── skill-review/         # L1: validate.py + analyze.sh
 │   └── skill-publish/        # L1: publish.py + 模板
 ├── README.md
 ├── README.zh.md

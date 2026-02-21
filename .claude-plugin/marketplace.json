@@ -6,7 +6,7 @@
   "plugins": [
     {
       "name": "better-skills",
-      "description": "Skill development toolkit: create, validate, iterate, and publish skills with runtime UX best practices baked in",
+      "description": "Skill development toolkit: create, review, and publish skills with runtime UX best practices baked in",
       "version": "1.0.0",
       "source": "./"
     }

@@ -10,7 +10,7 @@ Package a Claude Code skill into a complete, distributable GitHub repository. Ge
 ## How It Works
 
 1. Identify the skill to publish
-2. Optionally validate first with skill-validate
+2. Optionally review first with skill-review
 3. Collect publishing metadata through dialogue
 4. Generate the repository structure with `publish.py`
 5. Optionally initialize git and create GitHub repo
@@ -23,15 +23,15 @@ Ask the user for the skill directory path. Auto-detect if the current working di
 
 ### Step 2: Pre-Publish Validation
 
-If the `skill-validate` skill is available (check if `{SKILL_DIR}/../skill-validate/scripts/validate.py` exists), suggest running validation first:
+If the `skill-review` skill is available (check if `{SKILL_DIR}/../skill-review/scripts/validate.py` exists), suggest running validation first:
 
 ```bash
-python3 {SKILL_DIR}/../skill-validate/scripts/validate.py run --path <skill-path>
+python3 {SKILL_DIR}/../skill-review/scripts/validate.py run --path <skill-path>
 ```
 
 If there are failures, recommend fixing them before proceeding. Warnings are acceptable.
 
-If skill-validate is not available, do a quick manual check: verify SKILL.md exists and has valid frontmatter with name and description.
+If skill-review is not available, do a quick manual check: verify SKILL.md exists and has valid frontmatter with name and description.
 
 ### Step 3: Collect Metadata
 

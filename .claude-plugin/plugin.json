@@ -1,6 +1,6 @@
 {
   "name": "better-skills",
-  "description": "Skill development toolkit for Claude Code: create, validate, iterate, and publish skills with runtime UX best practices",
+  "description": "Skill development toolkit for Claude Code: create, review, and publish skills with runtime UX best practices",
   "version": "1.0.0",
   "author": {
     "name": "psylch"
