@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Package a Claude Code skill into a distributable GitHub repository.
+"""Package an agent skill into a distributable GitHub repository.
 
 Generates README, LICENSE, plugin.json, marketplace.json, .gitignore,
 and copies the skill directory into the proper structure.
@@ -84,12 +84,12 @@ def detect_level(skill_path):
 def extract_prerequisites(level):
     """Generate prerequisites text based on skill level."""
     if level == "l0":
-        return "- **Claude Code** or any agent that supports [skills.sh](https://skills.sh/)"
+        return "- Any AI coding agent that supports [skills.sh](https://skills.sh/) (Claude Code, Cursor, Windsurf, etc.)"
     elif level == "l0plus":
-        return ("- **Claude Code** or any agent that supports [skills.sh](https://skills.sh/)\n"
+        return ("- Any AI coding agent that supports [skills.sh](https://skills.sh/) (Claude Code, Cursor, Windsurf, etc.)\n"
                 "- **Bash** (for helper scripts)")
     else:
-        return ("- **Claude Code** or any agent that supports [skills.sh](https://skills.sh/)\n"
+        return ("- Any AI coding agent that supports [skills.sh](https://skills.sh/) (Claude Code, Cursor, Windsurf, etc.)\n"
                 "- **Python 3.11+** (for skill scripts)")
 
 

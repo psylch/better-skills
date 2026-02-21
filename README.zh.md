@@ -2,7 +2,7 @@
 
 [English](README.md)
 
-一个 [Claude Code](https://docs.anthropic.com/en/docs/claude-code) 技能开发工具包 — 创建、走查和发布技能，内置运行时 UX 最佳实践。
+一个面向 AI 编程 agent 的技能开发工具包 — 创建、走查和发布技能，内置运行时 UX 最佳实践。
 
 ## 技能列表
 
@@ -26,11 +26,11 @@ npx skills add psylch/better-skills -g -y
 git clone https://github.com/psylch/better-skills.git ~/.claude/skills/better-skills
 ```
 
-安装后需重启 Claude Code。
+安装后需重启 agent。
 
 ## 前置条件
 
-- **Claude Code** 或任何支持 [skills.sh](https://skills.sh/) 的 agent
+- 任何支持 [skills.sh](https://skills.sh/) 的 AI 编程 agent（Claude Code、Cursor、Windsurf 等）
 - **Python 3.11+**（脚手架脚本使用，stdlib-only 无外部依赖）
 
 ## 包含内容

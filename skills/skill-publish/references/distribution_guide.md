@@ -1,6 +1,6 @@
 # Distribution Guide
 
-How to distribute Claude Code skills via skills.sh and GitHub.
+How to distribute agent skills via skills.sh and GitHub.
 
 ## Repository Structure
 

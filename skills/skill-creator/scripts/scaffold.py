@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Scaffold generator for Claude Code skills.
+"""Scaffold generator for agent skills.
 
 Non-interactive script that generates skill project files from templates.
 All user interaction happens through Claude's dialogue — this script only
@@ -162,7 +162,7 @@ def scaffold(name, level, env, output_dir, force, templates_dir):
 
 def main():
     parser = argparse.ArgumentParser(
-        description="Generate Claude Code skill from templates",
+        description="Generate agent skill from templates",
         formatter_class=argparse.RawDescriptionHelpFormatter,
     )
     parser.add_argument('--name', required=True, help='Skill name (kebab-case, e.g. my-awesome-skill)')

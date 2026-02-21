@@ -1,11 +1,11 @@
 ---
 name: skill-publish
-description: "Package a Claude Code skill into a complete GitHub repository ready for distribution via skills.sh. Generates README, LICENSE, plugin.json, marketplace.json, .gitignore, and the proper directory structure. Optionally initializes a git repo and creates a GitHub repository. This skill should be used when publishing a skill, packaging a skill for distribution, preparing a skill repo, or when the user says 'publish skill', 'package skill', 'release skill', '发布技能', '打包 skill'."
+description: "Package a agent skill into a complete GitHub repository ready for distribution via skills.sh. Generates README, LICENSE, plugin.json, marketplace.json, .gitignore, and the proper directory structure. Optionally initializes a git repo and creates a GitHub repository. This skill should be used when publishing a skill, packaging a skill for distribution, preparing a skill repo, or when the user says 'publish skill', 'package skill', 'release skill', '发布技能', '打包 skill'."
 ---
 
 # Skill Publish
 
-Package a Claude Code skill into a complete, distributable GitHub repository. Generates all the surrounding files (README, LICENSE, plugin.json, marketplace.json) and optionally creates the GitHub repo.
+Package a agent skill into a complete, distributable GitHub repository. Generates all the surrounding files (README, LICENSE, plugin.json, marketplace.json) and optionally creates the GitHub repo.
 
 ## How It Works
 

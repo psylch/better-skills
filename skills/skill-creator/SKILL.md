@@ -1,11 +1,11 @@
 ---
 name: skill-creator
-description: "Create new Claude Code skills with best-practice templates. Guides through skill level selection (L0 pure prompt, L0+ with helper scripts, L1 with business scripts), environment strategy (stdlib/uv/venv), and generates ready-to-edit project files following runtime UX best practices. This skill should be used when creating a new skill, scaffolding a skill project, initializing skill templates, or when the user says 'help me build a skill', 'create a skill', '创建技能', '新建 skill'."
+description: "Create new agent skills with best-practice templates. Guides through skill level selection (L0 pure prompt, L0+ with helper scripts, L1 with business scripts), environment strategy (stdlib/uv/venv), and generates ready-to-edit project files following runtime UX best practices. This skill should be used when creating a new skill, scaffolding a skill project, initializing skill templates, or when the user says 'help me build a skill', 'create a skill', '创建技能', '新建 skill'."
 ---
 
 # Skill Creator
 
-Create new Claude Code skills by guiding the user through a series of choices, then generating a ready-to-edit project structure with best practices baked in.
+Create new agent skills by guiding the user through a series of choices, then generating a ready-to-edit project structure with best practices baked in.
 
 ## How It Works
 

@@ -2,7 +2,7 @@
 
 [中文文档](README.zh.md)
 
-A skill development toolkit for [Claude Code](https://docs.anthropic.com/en/docs/claude-code) — create, review, and publish skills with runtime UX best practices baked in.
+A skill development toolkit for AI coding agents — create, review, and publish skills with runtime UX best practices baked in.
 
 ## Skills
 
@@ -26,11 +26,11 @@ npx skills add psylch/better-skills -g -y
 git clone https://github.com/psylch/better-skills.git ~/.claude/skills/better-skills
 ```
 
-Restart Claude Code after installation.
+Restart your agent after installation.
 
 ## Prerequisites
 
-- **Claude Code** or any agent that supports [skills.sh](https://skills.sh/)
+- Any AI coding agent that supports [skills.sh](https://skills.sh/) (Claude Code, Cursor, Windsurf, etc.)
 - **Python 3.11+** (for scaffold scripts — stdlib only, no external dependencies)
 
 ## What's Inside

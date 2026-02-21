@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Validate a Claude Code skill directory against best-practice conventions.
+"""Validate a agent skill directory against best-practice conventions.
 
 Checks structure, naming, content quality, path integrity, script conventions,
 security patterns, and completeness. Outputs a graded JSON report.
@@ -516,7 +516,7 @@ def cmd_preflight(_args):
 
 def main():
     parser = argparse.ArgumentParser(
-        description="Validate a Claude Code skill directory",
+        description="Validate a agent skill directory",
         formatter_class=argparse.RawDescriptionHelpFormatter,
     )
     sub = parser.add_subparsers(dest="command")
