@@ -49,6 +49,18 @@ Every L0+ and L1 skill should have a `preflight` command that returns:
 
 `ready: true` means proceed. `ready: false` means follow hints before running business commands.
 
+**Fix guidance table:** When preflight has multiple checks, provide a Check → Fix mapping table in SKILL.md so Claude (and users) know exactly how to resolve each failure:
+
+```
+| Check | Fix |
+|-------|-----|
+| Chrome not found | Install Chrome or set `CHROME_PATH` env var |
+| API credentials | Follow guided setup in Step N |
+| Missing tool X | `brew install x` / `apt install x` |
+```
+
+This avoids generic "preflight failed" messages and gives actionable remediation per item.
+
 ## Environment Strategy Decision
 
 ```
@@ -234,6 +246,22 @@ Support a layered configuration system:
 4. Skill defaults (hardcoded fallback)
 
 **First-time setup:** When config is not found, trigger a guided setup flow. Save the user's choices so they don't repeat configuration every session.
+
+**Separate credentials from preferences:** Use `.env` for secrets (API tokens, keys) and a separate config file (e.g., `EXTEND.md`, `config.yml`) for non-secret user preferences (theme, author, default flags). This separation allows:
+- Preferences can be checked into version control safely
+- `.env` stays in `.gitignore`
+- Different discovery paths: `.env` is loaded by scripts silently; config files are read by SKILL.md logic
+
+**Config file discovery** (check in order, use first found):
+```bash
+# Project-level (this project only)
+test -f <cwd>/.baoyu-skills/<skill-name>/EXTEND.md && echo "project"
+
+# User-level (all projects)
+test -f "$HOME/.baoyu-skills/<skill-name>/EXTEND.md" && echo "user"
+```
+
+If neither exists → trigger first-time setup → ask user which level to save to → write file.
 
 ## User Experience Tips
 

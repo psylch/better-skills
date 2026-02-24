@@ -52,6 +52,7 @@ description: "Validate and test REST API endpoints with automated contract check
 ```json
 {"ready": true, "dependencies": {...}, "credentials": {...}, "services": {...}}
 ```
+Also add a **Check → Fix table** in SKILL.md so each preflight failure has a specific remediation (e.g., "Chrome not found → Install Chrome or set `CHROME_PATH`"). Generic "preflight failed" without per-item guidance is insufficient.
 
 ### No setup separation
 **Look for:** L1 skill with `has_setup: false`.
@@ -151,7 +152,11 @@ Provide a markdown file path.
 **Applies when:** Skill has recurring per-user config (theme, author, output dir) that stays the same across sessions. Skip for skills where each invocation genuinely needs fresh parameters (e.g., skill-creator collects different name/level each time).
 **Look for:** `has_preference_persistence: false` in profile, combined with repeated configuration questions across sessions.
 **Why:** Repeating configuration is tedious. Users expect their choices to be remembered. First-time setup should happen once, not every time.
-**Fix:** Implement a config file (EXTEND.md or YAML) with project-level and user-level locations. On first run, guide the user through setup and save their choices. On subsequent runs, load saved preferences silently. See `best_practices.md` for the full convention.
+**Fix:** Separate secrets from preferences:
+- **Secrets** (API tokens, keys) → `.env` file, loaded by scripts, stays in `.gitignore`
+- **Preferences** (theme, author, default flags) → config file (e.g., `EXTEND.md`), safe to version control
+
+Both use the same discovery pattern: project-level (`<cwd>/.baoyu-skills/<skill>/`) → user-level (`$HOME/.baoyu-skills/<skill>/`). On first run, guide the user through setup and let them choose which level to save to. On subsequent runs, load silently. See `best_practices.md` for the full convention.
 
 ### Missing cross-skill dependency handling
 **Applies when:** SKILL.md references or invokes another skill by name. Skip for self-contained skills.
