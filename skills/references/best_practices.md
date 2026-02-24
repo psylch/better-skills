@@ -61,6 +61,8 @@ Every L0+ and L1 skill should have a `preflight` command that returns:
 
 This avoids generic "preflight failed" messages and gives actionable remediation per item.
 
+**Validate credentials by testing actual capability, not meta-endpoints.** Many APIs have multiple token types (user-level, account-level, service tokens) with different verification endpoints. Instead of calling a token-verify endpoint (which may not support all token types), test an actual API call the skill needs — e.g., list resources with `per_page=1`. This avoids false negatives from token-type mismatches.
+
 ## Environment Strategy Decision
 
 ```
