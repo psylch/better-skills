@@ -271,7 +271,9 @@ def checks_scripts(skill_path):
             pass
 
     # JSON output pattern
-    if "json.dumps" in all_content or "json.dump" in all_content or 'echo \'{"' in all_content:
+    json_patterns = ["json.dumps", "json.dump", 'echo \'{"', "| jq", "jq '.", 'jq ".',
+                     '{"status":', '"status": "ok"', "json_ok", "json_error"]
+    if any(p in all_content for p in json_patterns):
         results.append(check_result("script_json_output", "scripts", "pass",
                                     "Scripts use JSON output pattern"))
     else:
