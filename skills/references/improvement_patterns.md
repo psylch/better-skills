@@ -110,9 +110,60 @@ description: "Validate and test REST API endpoints with automated contract check
 **Fix:** In SKILL.md, explicitly instruct Claude to run long-running commands with `run_in_background: true`. Example: `**run this command in the background** (use run_in_background: true in Bash) since the dashboard is a long-running server process`.
 
 ### No post-completion status reporting
-**Look for:** Download, generation, or file-creation operations that don't tell the user where results ended up.
+**Applies when:** Skill produces artifacts (files, downloads, API mutations, published drafts). Skip for purely informational skills (config wizards, research, audits that only print results).
+**Look for:** `has_completion_report: false` in profile, combined with file-creation or API-mutation operations.
 **Why:** Users shouldn't have to search the filesystem for output files. After any operation that produces artifacts, the skill should report: file path, file size, and any remaining quotas or limits.
-**Fix:** Add explicit instructions in SKILL.md for Claude to report results after operations complete. Example: "After download completes, tell the user the file path, size, and remaining daily quota."
+**Fix:** Add a structured Completion Report section in SKILL.md with a template covering: Input, Method, Result, Files created, and Next Steps. See `best_practices.md` for the full template.
+
+### No progress checklist for multi-step workflows
+**Applies when:** Workflow has 4+ sequential steps. Skip for simple 1-3 step or non-linear workflows.
+**Look for:** `has_checklist: false` in profile, combined with 4+ step headings.
+**Why:** Without visible progress tracking, users lose context in long workflows. If interrupted, there's no way to see where things left off. Claude may also skip or repeat steps.
+**Fix:** Add a checklist block at the start of the workflow section:
+```
+Progress:
+- [ ] Step 1: ...
+- [ ] Step 2: ...
+```
+
+### Rigid input requirements
+**Applies when:** Skill accepts file or content input from the user. Skip for dialogue-driven skills with no file input (e.g., config wizards, skill-creator).
+**Look for:** `has_input_adaptation: false` in profile, combined with file path parameters in the workflow.
+**Why:** Users provide input in whatever form they have. Rejecting valid-but-wrong-format input creates unnecessary friction. Skills that auto-detect and convert input types feel dramatically more polished.
+**Fix:** Add input type detection logic. Accept multiple formats and convert as needed.
+
+**Before:**
+```markdown
+## Input
+Provide a markdown file path.
+```
+**After:**
+```markdown
+## Input Detection
+| Input Type | Detection | Action |
+|------------|-----------|--------|
+| HTML file | `.html` extension | Skip conversion, proceed |
+| Markdown file | `.md` extension | Convert to HTML first |
+| Plain text | Not a file path | Save as markdown, then convert |
+```
+
+### No user preference persistence
+**Applies when:** Skill has recurring per-user config (theme, author, output dir) that stays the same across sessions. Skip for skills where each invocation genuinely needs fresh parameters (e.g., skill-creator collects different name/level each time).
+**Look for:** `has_preference_persistence: false` in profile, combined with repeated configuration questions across sessions.
+**Why:** Repeating configuration is tedious. Users expect their choices to be remembered. First-time setup should happen once, not every time.
+**Fix:** Implement a config file (EXTEND.md or YAML) with project-level and user-level locations. On first run, guide the user through setup and save their choices. On subsequent runs, load saved preferences silently. See `best_practices.md` for the full convention.
+
+### Missing cross-skill dependency handling
+**Applies when:** SKILL.md references or invokes another skill by name. Skip for self-contained skills.
+**Look for:** `has_cross_skill_handling: false` in profile, combined with other skill names in the content.
+**Why:** Users may not have all skills installed. A hard failure with a cryptic error is a poor experience. Offering installation instructions or a manual workaround respects the user's time.
+**Fix:** Check for dependency skills at workflow start. If missing, present options: install the dependency, provide alternative input manually, or cancel. Never hard-fail without guidance.
+
+### No language matching
+**Applies when:** Skill is published publicly or targets multilingual users. Skip for personal/internal skills with a single-language audience.
+**Look for:** `has_language_section: false` in profile.
+**Why:** Users expect responses in their own language. A skill that always replies in English alienates Chinese-speaking users, and vice versa.
+**Fix:** Add a Language section at the top of SKILL.md: `**Match user's language**: Respond in the same language the user uses.`
 
 ## Security
 

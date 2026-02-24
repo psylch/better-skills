@@ -5,6 +5,12 @@ description: "Create new agent skills with best-practice templates. Guides throu
 
 # Skill Creator
 
+## Language
+
+**Match user's language**: Respond in the same language the user uses.
+
+## Overview
+
 Create new agent skills by guiding the user through a series of choices, then generating a ready-to-edit project structure with best practices baked in.
 
 ## How It Works
@@ -14,6 +20,13 @@ Create new agent skills by guiding the user through a series of choices, then ge
 3. Report what was generated and guide next steps
 
 ## Dialogue Flow
+
+Progress:
+- [ ] Step 1: Skill name
+- [ ] Step 2: Skill level
+- [ ] Step 3: Environment strategy (L1 only)
+- [ ] Step 4: Output directory
+- [ ] Generate and report
 
 Follow these steps in order. Use AskUserQuestion for steps 1–4.
 
@@ -78,9 +91,27 @@ The script outputs JSON to stdout:
 
 If it fails, stderr contains JSON with `error`, `hint`, and `recoverable` fields.
 
-## Post-Generation Guidance
+## Completion Report
 
-After successful generation, tell the user:
+After successful generation, present:
+
+```
+[Skill Creator] Complete!
+
+Skill: <name> (Level: <level>[, Env: <env>])
+Output: <directory>
+
+Files created:
+• <list from JSON "created" field>
+
+Next Steps:
+→ Edit SKILL.md — replace TODO markers, write description with trigger phrases
+→ Customize scripts/ (L0+/L1)
+→ Test preflight (L0+/L1)
+→ Publish with skill-publish when ready
+```
+
+Then provide detailed guidance:
 
 1. **Edit SKILL.md** — Replace all placeholder markers. The `description` field in frontmatter is critical — it determines when Claude activates the skill. Be specific and include trigger phrases.
 
@@ -94,7 +125,8 @@ After successful generation, tell the user:
 
 4. **Add references/** — Put detailed reference documents here and reference them from SKILL.md with file read instructions. Keep SKILL.md lean.
 
-5. **Ready to publish?** — Use the `skill-publish` skill (if installed) to wrap this into a complete GitHub repo with README, LICENSE, plugin.json, and marketplace.json.
+5. **Ready to publish?** — If the `skill-publish` skill is installed, use it to wrap this into a complete GitHub repo with README, LICENSE, plugin.json, and marketplace.json.
+   If not installed: `npx skills add psylch/better-skills@skill-publish -g -y`
 
 ## References
 

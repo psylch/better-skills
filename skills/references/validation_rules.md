@@ -38,14 +38,11 @@ The frontmatter `name` should match the directory name. Mismatches cause confusi
 ### description_length (warn)
 Descriptions under 50 characters are too terse to give Claude enough context for activation. Aim for 100–200 characters covering: what the skill does, when to use it, and example trigger phrases.
 
-### description_trigger_phrases (warn)
-Including phrases like "Use when..." or "when the user says '...'" helps Claude understand when to activate the skill. Without these, the skill may not trigger at the right time.
+### body_length (warn)
+The SKILL.md body (after frontmatter) should be at least 10 lines. Shorter bodies typically lack sufficient instructions for Claude to execute the skill correctly.
 
-### description_third_person (warn)
-Descriptions should use third-person voice ("This skill validates..." not "You can validate..."). This is an AI consumption convention — Claude reads descriptions to decide whether to activate.
-
-### workflow_section (warn)
-A Workflow, How It Works, or Process section gives Claude the step-by-step procedure to follow. Without it, Claude must improvise the execution flow.
+### heading_structure (warn)
+SKILL.md should have at least 2 headings to provide organizational structure. A single heading or none suggests the instructions are unstructured, which makes it harder for Claude to navigate the skill.
 
 ## Path Checks
 
@@ -87,3 +84,4 @@ Unfinished-work markers (e.g. `T0D0`) indicate incomplete sections. Replace them
 
 ### no_template_placeholders (fail)
 `{{PLACEHOLDER}}` markers are template variables that should have been replaced during scaffold generation. Their presence indicates a broken generation process.
+

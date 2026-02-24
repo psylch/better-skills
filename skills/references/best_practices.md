@@ -97,9 +97,125 @@ Use consistent command names across all skills:
 - Default to concise — Claude can request detailed when needed
 - Never dump unbounded data to stdout
 
+## UX Practices
+
+Not every practice applies to every skill. Each has an **applicability condition** — only suggest it when the condition is met.
+
+### Applicability Matrix
+
+| Practice | Applies when | Does NOT apply when |
+|----------|-------------|---------------------|
+| Language Matching | Skill targets multilingual users, or is published publicly | Personal/internal skill with single-language audience |
+| Progress Checklist | Workflow has 4+ sequential steps | Simple 1-3 step workflow, or non-linear workflow |
+| Completion Report | Skill produces artifacts (files, API results, side effects) | Skill is purely informational (config wizard, research) |
+| Input Adaptation | Skill accepts file/content input from user | Skill is dialogue-driven with no file input |
+| Cross-skill Dependencies | SKILL.md references another skill by name | Skill is self-contained |
+| User Preferences | Skill has recurring per-user config (theme, author, output dir) that stays the same across sessions | Each invocation genuinely needs fresh parameters |
+
+When reviewing a skill, **check the applicability condition first**. A `false` profile flag with no applicable condition is not a problem — it's the expected state.
+
+### Language Matching
+
+**Applies when:** Skill is published publicly or targets multilingual users.
+
+Add to the top of SKILL.md:
+
+```
+## Language
+**Match user's language**: Respond in the same language the user uses.
+```
+
+### Progress Checklist
+
+**Applies when:** Workflow has 4+ sequential steps.
+
+Provide a copyable checklist at the start of the workflow:
+
+```
+Progress:
+- [ ] Step 1: Validate input
+- [ ] Step 2: Convert format
+- [ ] Step 3: Check metadata
+- [ ] Step 4: Publish
+- [ ] Step 5: Report completion
+```
+
+Benefits: visible progress, resumability if interrupted, clear scope of what the skill does.
+
+### Completion Report
+
+**Applies when:** Skill produces artifacts (files, downloads, API mutations, published drafts).
+
+Present a structured completion report after the operation:
+
+```
+[Skill Name] Complete!
+
+Input: [type] - [path or description]
+Method: [which method/backend was used]
+
+Result:
+✓ [What was accomplished]
+• [Key detail 1]
+• [Key detail 2]
+
+Files created:
+• [path/to/output1]
+• [path/to/output2]
+
+Next Steps:
+→ [Actionable suggestion with link if applicable]
+```
+
+### Input Adaptation
+
+**Applies when:** Skill accepts file or content input from the user.
+
+Accept imperfect input and adapt rather than reject:
+
+| Input State | Approach |
+|-------------|----------|
+| Wrong format but convertible | Auto-convert (e.g., plain text → markdown → HTML) |
+| Missing optional metadata | Auto-generate with sensible defaults, inform user |
+| Ambiguous input type | Detect automatically (file extension, content sniffing) |
+| Partially complete | Fill in gaps, ask only for truly required fields |
+
+### Cross-skill Dependencies
+
+**Applies when:** SKILL.md references or invokes another skill.
+
+1. **Check availability** at the start of the workflow
+2. **If missing**, provide:
+   - Installation command or link
+   - An alternative path that doesn't require the dependency
+   - Let the user choose (install vs. workaround vs. cancel)
+
+```
+[dependency-skill] not found.
+
+Options:
+A) Install it: npx skills add owner/repo -g -y
+B) Continue without it (provide [alternative input] manually)
+C) Cancel
+```
+
+### User Preferences
+
+**Applies when:** Skill has recurring per-user configuration (theme, author, default output directory) that stays the same across sessions.
+
+Support a layered configuration system:
+
+**Priority chain** (highest to lowest):
+1. CLI arguments (per invocation)
+2. Frontmatter / inline metadata (per file)
+3. User config file (persistent preferences)
+4. Skill defaults (hardcoded fallback)
+
+**First-time setup:** When config is not found, trigger a guided setup flow. Save the user's choices so they don't repeat configuration every session.
+
 ## User Experience Tips
 
 - **Long-running operations → background mode.** Download dashboards, web UIs, and server processes should be explicitly marked in SKILL.md for background execution (`run_in_background: true`). Otherwise Claude blocks the conversation.
-- **Report results after operations.** After downloads, file generation, or any operation that produces artifacts, instruct Claude to tell the user: file path, file size, and any remaining quotas or limits.
+- **Report results after operations.** After downloads, file generation, or any operation that produces artifacts, instruct Claude to tell the user: file path, file size, and any remaining quotas or limits. Use the Completion Report template above.
 - **Never ask for credentials in chat.** Direct users to edit config files. Chat history may be persisted.
 - **First run should be fast.** Prefer stdlib-only or uv over pip + venv. Users judge a skill by first impression.

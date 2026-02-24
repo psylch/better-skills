@@ -1,9 +1,15 @@
 ---
 name: {{SKILL_NAME}}
-description: "TODO: Describe what this skill does, when to use it, and include trigger phrases (both English and Chinese if applicable). Write in third person. This description determines when Claude activates the skill — be specific."
+description: "TODO: Describe what this skill does, when to use it, and include trigger phrases (both English and Chinese if applicable). This description determines when Claude activates the skill — be specific."
 ---
 
 # {{SKILL_NAME_TITLE}}
+
+## Language
+
+**Match user's language**: Respond in the same language the user uses.
+
+## Overview
 
 TODO: Brief description of what this skill does and how it works.
 
@@ -14,7 +20,7 @@ TODO: Define the step-by-step workflow Claude should follow when this skill is t
 1. Run preflight check
 2. If not ready, guide user through setup
 3. Execute business logic
-4. Present results to user
+4. Present completion report
 
 ## Runtime
 
@@ -73,6 +79,16 @@ TODO: Define behavior when optional dependencies are unavailable.
 | TODO | TODO | `python3 scripts/main.py TODO` |
 
 All commands output JSON to stdout. Errors go to stderr as JSON with `error`, `hint`, and `recoverable` fields.
+
+## Completion Report
+
+After completing the workflow, present results to the user:
+
+```
+[{{SKILL_NAME_TITLE}}] Complete!
+
+TODO: Define what to report — input, output files, next steps.
+```
 
 ## Troubleshooting
 

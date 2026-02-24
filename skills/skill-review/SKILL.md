@@ -5,6 +5,12 @@ description: "Review a agent skill by running automated validation checks and su
 
 # Skill Review
 
+## Language
+
+**Match user's language**: Respond in the same language the user uses.
+
+## Overview
+
 Review a agent skill by combining automated validation with analytical improvement suggestions. Produces a graded report, identifies quality issues, and can interactively apply fixes.
 
 ## How It Works
@@ -17,6 +23,14 @@ Review a agent skill by combining automated validation with analytical improveme
 6. Interactively apply improvements if the user agrees
 
 ## Dialogue Flow
+
+Progress:
+- [ ] Step 1: Identify the skill
+- [ ] Step 2: Automated validation
+- [ ] Step 3: Profile extraction
+- [ ] Step 4: Deep analysis
+- [ ] Step 5: Present findings
+- [ ] Step 6: Interactive improvement
 
 ### Step 1: Identify the Skill
 
@@ -85,7 +99,21 @@ Format the report for the user in this order:
    - Which file to edit
    - Priority: High (affects functionality/UX), Medium (convention violations), Low (polish)
 
-If the grade is A or B with no improvement suggestions, congratulate and suggest publishing with `skill-publish`.
+Present a completion report before asking about fixes:
+
+```
+[Skill Review] Complete!
+
+Target: <skill-name> at <path>
+Grade: <letter> (<pass>/<total> passed, <warn> warnings, <fail> failures)
+
+Issues found:
+• <fail count> failure(s)
+• <warn count> warning(s)
+• <N> improvement suggestion(s)
+```
+
+If the grade is A or B with no improvement suggestions, congratulate and suggest publishing with `skill-publish`. If not installed: `npx skills add psylch/better-skills@skill-publish -g -y`
 
 ### Step 6: Interactive Improvement
 
@@ -103,7 +131,7 @@ For each selected item, make the edit directly (using file editing tools), then 
 |----------|----------------|
 | **structure** | SKILL.md exists, frontmatter present, required fields |
 | **naming** | Kebab-case, length, no consecutive hyphens, matches directory |
-| **content** | Description quality, trigger phrases, workflow section |
+| **content** | Description length, body length, heading structure |
 | **paths** | Referenced files exist, scripts have execute permission |
 | **scripts** | JSON output pattern, preflight subcommand, error handling |
 | **security** | No hardcoded paths, no secrets, no PII patterns |
@@ -127,6 +155,7 @@ For each selected item, make the edit directly (using file editing tools), then 
 | **Script quality** | JSON output, error handling, token awareness, exit codes |
 | **Documentation** | Troubleshooting tables, reference organization, no TODOs |
 | **Security** | Credential handling, no hardcoded paths or secrets |
+| **User experience** | Profile flags: `has_checklist`, `has_completion_report`, `has_input_adaptation`, `has_language_section`, `has_cross_skill_handling`, `has_preference_persistence` — for each `false` flag, check the **"Applies when"** condition in improvement_patterns.md before suggesting. A `false` flag with no applicable condition is the expected state, not a problem. |
 
 ## References
 

@@ -216,6 +216,14 @@ ENDJSON
     HAS_TROUBLESHOOTING=$(has_pattern "troubleshooting")
     HAS_CREDENTIAL_TABLE=$(has_pattern "credential")
 
+    # UX pattern detection
+    HAS_LANGUAGE_SECTION=$(has_pattern "match.*language\|## Language")
+    HAS_CHECKLIST=$(has_pattern "\- \[ \]")
+    HAS_COMPLETION_REPORT=$(has_pattern "complete!\|completion report\|## Completion")
+    HAS_INPUT_ADAPTATION=$(has_pattern "input.*type\|input.*detection\|auto.detect\|auto.convert")
+    HAS_CROSS_SKILL_HANDLING=$(has_pattern "not found\|not installed\|npx skills add")
+    HAS_PREFERENCE_PERSISTENCE=$(has_pattern "EXTEND.md\|config\.yml\|preference\|load.*config")
+
     # Template placeholder count
     TEMPLATE_COUNT=$(grep -c -E '\{\{[A-Z_]+\}\}' "$SKILL_MD" 2>/dev/null || true)
     TEMPLATE_COUNT=${TEMPLATE_COUNT:-0}
@@ -264,7 +272,13 @@ ENDJSON
     "has_credential_table": $HAS_CREDENTIAL_TABLE,
     "todo_count": $TODO_COUNT,
     "template_placeholder_count": $TEMPLATE_COUNT,
-    "env_strategy": "$ENV_STRATEGY"
+    "env_strategy": "$ENV_STRATEGY",
+    "has_language_section": $HAS_LANGUAGE_SECTION,
+    "has_checklist": $HAS_CHECKLIST,
+    "has_completion_report": $HAS_COMPLETION_REPORT,
+    "has_input_adaptation": $HAS_INPUT_ADAPTATION,
+    "has_cross_skill_handling": $HAS_CROSS_SKILL_HANDLING,
+    "has_preference_persistence": $HAS_PREFERENCE_PERSISTENCE
   },
   "hint": "Skill profile extracted. Level: $LEVEL, $TOTAL_LINES lines, $TODO_COUNT TODO(s)."
 }

@@ -156,7 +156,7 @@ def checks_naming(skill_path, fm):
 
 
 def checks_content(content, fm):
-    """Content quality checks: description length, trigger phrases, sections."""
+    """Content quality checks: quantitative metrics only (no keyword guessing)."""
     results = []
     if not fm:
         return results
@@ -168,40 +168,29 @@ def checks_content(content, fm):
     else:
         results.append(check_result("description_length", "content", "warn",
                                     f"Description is only {len(desc)} chars (recommend ≥50)",
-                                    "Add more detail about when to use this skill and trigger phrases"))
+                                    "Add more detail about what the skill does and when to use it"))
 
-    # Check for trigger-phrase-like patterns (quoted phrases, 'when ... says')
-    trigger_patterns = [r"when the user says", r"when.*says\s+'", r"trigger", r"use when",
-                        r"should be used when"]
-    has_trigger = any(re.search(p, desc, re.IGNORECASE) for p in trigger_patterns)
-    if has_trigger:
-        results.append(check_result("description_trigger_phrases", "content", "pass",
-                                    "Description contains trigger phrase guidance"))
+    # SKILL.md body length — too short means insufficient instructions for Claude
+    body = re.sub(r'^---.*?---\s*', '', content, count=1, flags=re.DOTALL).strip()
+    body_lines = len(body.splitlines())
+    if body_lines < 10:
+        results.append(check_result("body_length", "content", "warn",
+                                    f"SKILL.md body is only {body_lines} lines (recommend ≥10)",
+                                    "Add workflow steps, examples, or reference pointers"))
     else:
-        results.append(check_result("description_trigger_phrases", "content", "warn",
-                                    "Description may lack trigger phrases",
-                                    "Add phrases like \"Use when...\" or \"when the user says '...'\" to help Claude know when to activate"))
+        results.append(check_result("body_length", "content", "pass",
+                                    f"SKILL.md body: {body_lines} lines"))
 
-    # Third-person check (no "I " or "you " at word boundaries in description)
-    if re.search(r'\bI\b(?!\.)', desc) or re.search(r'\byou\b', desc, re.IGNORECASE):
-        results.append(check_result("description_third_person", "content", "warn",
-                                    "Description uses first/second person ('I' or 'you')",
-                                    "Use third-person voice: 'This skill...' instead of 'You can...'"))
+    # SKILL.md heading count — skills with no headings lack structure
+    headings = re.findall(r'^#{1,4}\s+.+', content, re.MULTILINE)
+    if len(headings) < 2:
+        results.append(check_result("heading_structure", "content", "warn",
+                                    f"Only {len(headings)} heading(s) found (recommend ≥2)",
+                                    "Add section headings to organize the skill instructions"))
     else:
-        results.append(check_result("description_third_person", "content", "pass",
-                                    "Description uses appropriate voice"))
+        results.append(check_result("heading_structure", "content", "pass",
+                                    f"{len(headings)} headings found"))
 
-    # Check for workflow section
-    workflow_patterns = [r'^##\s+(Workflow|How It Works|Process|Dialogue Flow|Steps)',]
-    has_workflow = any(re.search(p, content, re.MULTILINE | re.IGNORECASE)
-                       for p in workflow_patterns)
-    if has_workflow:
-        results.append(check_result("workflow_section", "content", "pass",
-                                    "Workflow/process section found"))
-    else:
-        results.append(check_result("workflow_section", "content", "warn",
-                                    "No Workflow or 'How It Works' section found",
-                                    "Add a section describing the step-by-step process"))
     return results
 
 

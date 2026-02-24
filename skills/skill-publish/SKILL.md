@@ -5,6 +5,12 @@ description: "Package a agent skill into a complete GitHub repository ready for 
 
 # Skill Publish
 
+## Language
+
+**Match user's language**: Respond in the same language the user uses.
+
+## Overview
+
 Package a agent skill into a complete, distributable GitHub repository. Generates all the surrounding files (README, LICENSE, plugin.json, marketplace.json) and optionally creates the GitHub repo.
 
 ## How It Works
@@ -17,21 +23,41 @@ Package a agent skill into a complete, distributable GitHub repository. Generate
 
 ## Dialogue Flow
 
+Progress:
+- [ ] Step 1: Identify the skill
+- [ ] Step 2: Pre-publish validation
+- [ ] Step 3: Collect metadata
+- [ ] Step 4: Generate repository
+- [ ] Step 5: Post-generation
+
 ### Step 1: Identify the Skill
 
-Ask the user for the skill directory path. Auto-detect if the current working directory contains a SKILL.md. Accept absolute or relative paths.
+Accept the skill location in multiple forms:
+
+| Input | Detection | Action |
+|-------|-----------|--------|
+| Directory with SKILL.md | Direct path | Use as-is |
+| SKILL.md file path | Path ends in `SKILL.md` | Use parent directory |
+| Current directory | No input, cwd has SKILL.md | Auto-detect |
 
 ### Step 2: Pre-Publish Validation
 
-If the `skill-review` skill is available (check if `{SKILL_DIR}/../skill-review/scripts/validate.py` exists), suggest running validation first:
+Check for `skill-review` availability:
+1. First try: `{SKILL_DIR}/../skill-review/scripts/validate.py`
+2. Fallback: `~/.agents/skills/skill-review/scripts/validate.py`
+
+If found, suggest running validation:
 
 ```bash
-python3 {SKILL_DIR}/../skill-review/scripts/validate.py run --path <skill-path>
+python3 <validate.py path> run --path <skill-path>
 ```
 
 If there are failures, recommend fixing them before proceeding. Warnings are acceptable.
 
-If skill-review is not available, do a quick manual check: verify SKILL.md exists and has valid frontmatter with name and description.
+If skill-review is not available, offer:
+- A) Install it: `npx skills add psylch/better-skills@skill-review -g -y`
+- B) Continue without it (quick manual check: verify SKILL.md exists with valid frontmatter)
+- C) Cancel
 
 ### Step 3: Collect Metadata
 
@@ -75,7 +101,26 @@ The script outputs JSON to stdout:
 
 ### Step 5: Post-Generation
 
-Present what was generated, then ask the user what to do next:
+Present a completion report:
+
+```
+[Skill Publish] Complete!
+
+Skill: <skill-name>
+Repository: <owner>/<repo>
+License: <license>
+Output: <directory>
+
+Files created:
+• <list from JSON "created" field>
+
+Next Steps:
+→ A) Initialize git repo
+→ B) Create GitHub repo and push
+→ C) Done — handle git manually
+```
+
+Then let the user choose:
 
 **Option A: Initialize git repo**
 ```bash
