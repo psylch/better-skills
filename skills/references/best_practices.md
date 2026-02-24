@@ -76,10 +76,32 @@ Use consistent command names across all skills:
 
 ## Credential Management
 
-- **API tokens** → Environment variables (`$SKILL_NAME_API_KEY`), don't persist to files
-- **Persistent credentials** → `~/.claude/<skill-name>/.env`, provide `.env.example` template
+**Storage locations** (priority order):
+1. Environment variables (`$SKILL_NAME_API_KEY`) — highest priority, per-session
+2. Project-level: `<cwd>/.env` or `<cwd>/.baoyu-skills/<skill-name>/.env`
+3. User-level: `~/.claude/<skill-name>/.env` or `~/.baoyu-skills/<skill-name>/.env`
+
+**First-time setup flow:** When credentials are missing, don't just fail — guide the user:
+
+```
+[Credential] not found.
+
+How to obtain:
+1. Visit <service dashboard URL>
+2. Create token with <required permissions>
+3. Copy the token
+
+Where to save?
+A) Project-level: .env in current directory (this project only)
+B) User-level: ~/.claude/<skill-name>/.env (all projects)
+```
+
+After the user chooses, write the `.env` file to the selected location. On subsequent runs, load it silently.
+
+**Rules:**
+- **Never ask for passwords/tokens in chat** — direct users to paste into a file or use the guided setup to write `.env`
 - **Browser login state** → Status cache JSON with optimistic assumption + passive expiry
-- **Never ask for passwords in chat** — direct users to edit config files
+- **Provide `.env.example`** template so users know the expected format
 
 ## Degradation Patterns
 
