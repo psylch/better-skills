@@ -8,9 +8,9 @@ A skill development toolkit for AI coding agents — create, review, and publish
 
 | Skill | Purpose | Status |
 |-------|---------|--------|
-| [**skill-creator**](skills/skill-creator/) | Create new skills from best-practice templates | Available |
-| [**skill-review**](skills/skill-review/) | Validate structure, suggest improvements, and apply fixes | Available |
-| [**skill-publish**](skills/skill-publish/) | Package and publish skills for distribution | Available |
+| [**better-skill-creator**](skills/better-skill-creator/) | Create new skills from best-practice templates | Available |
+| [**better-skill-review**](skills/better-skill-review/) | Validate structure, suggest improvements, and apply fixes | Available |
+| [**better-skill-publish**](skills/better-skill-publish/) | Package and publish skills for distribution | Available |
 
 ## Installation
 
@@ -35,15 +35,15 @@ Restart your agent after installation.
 
 ## What's Inside
 
-### skill-creator
+### better-skill-creator
 
 Guides you through creating a new skill via interactive dialogue — name, level (L0/L0+/L1), environment strategy (stdlib/uv/venv), and output directory. Generates ready-to-edit templates with preflight framework, JSON output conventions, and error handling baked in.
 
-### skill-review
+### better-skill-review
 
 Reviews a skill by combining automated validation (22+ checks across 7 categories, graded A–F) with analytical improvement suggestions based on best practices. Presents a unified report with the grade, issues, and prioritized suggestions with before/after examples. Can interactively apply fixes.
 
-### skill-publish
+### better-skill-publish
 
 Packages a skill into a complete GitHub repository: generates README (EN + ZH), LICENSE, plugin.json, marketplace.json, .gitignore, and the proper directory structure. Optionally initializes git and creates a GitHub repo.
 
@@ -64,9 +64,9 @@ better-skills/
 │   └── marketplace.json
 ├── skills/
 │   ├── references/            # Shared knowledge base (symlinked into each skill)
-│   ├── skill-creator/        # L1: scaffold.py + templates
-│   ├── skill-review/         # L1: validate.py + analyze.sh
-│   └── skill-publish/        # L1: publish.py + templates
+│   ├── better-skill-creator/        # L1: scaffold.py + templates
+│   ├── better-skill-review/         # L1: validate.py + analyze.sh
+│   └── better-skill-publish/        # L1: publish.py + templates
 ├── README.md
 ├── README.zh.md
 └── LICENSE

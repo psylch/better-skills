@@ -1,5 +1,5 @@
 ---
-name: skill-review
+name: better-skill-review
 description: "Review a agent skill by running automated validation checks and suggesting improvements based on best practices. Combines structural validation (graded report with pass/warn/fail checks) with analytical improvement suggestions (prioritized with before/after examples). Can interactively apply fixes. This skill should be used when reviewing a skill, validating skill structure, improving skill quality, checking skill conventions, or when the user says 'review skill', 'validate skill', 'check skill', 'improve skill', 'iterate on skill', '走查技能', '验证技能', '检查 skill', '改进技能', '优化 skill'."
 ---
 
@@ -113,7 +113,7 @@ Issues found:
 • <N> improvement suggestion(s)
 ```
 
-If the grade is A or B with no improvement suggestions, congratulate and suggest publishing with `skill-publish`. If not installed: `npx skills add psylch/better-skills@skill-publish -g -y`
+If the grade is A or B with no improvement suggestions, congratulate and suggest publishing with `better-skill-publish`. If not installed: `npx skills add psylch/better-skills@better-skill-publish -g -y`
 
 ### Step 6: Interactive Improvement
 

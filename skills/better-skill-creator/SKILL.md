@@ -1,5 +1,5 @@
 ---
-name: skill-creator
+name: better-skill-creator
 description: "Create new agent skills with best-practice templates. Guides through skill level selection (L0 pure prompt, L0+ with helper scripts, L1 with business scripts), environment strategy (stdlib/uv/venv), and generates ready-to-edit project files following runtime UX best practices. This skill should be used when creating a new skill, scaffolding a skill project, initializing skill templates, or when the user says 'help me build a skill', 'create a skill', '创建技能', '新建 skill'."
 ---
 
@@ -125,8 +125,8 @@ Then provide detailed guidance:
 
 4. **Add references/** — Put detailed reference documents here and reference them from SKILL.md with file read instructions. Keep SKILL.md lean.
 
-5. **Ready to publish?** — If the `skill-publish` skill is installed, use it to wrap this into a complete GitHub repo with README, LICENSE, plugin.json, and marketplace.json.
-   If not installed: `npx skills add psylch/better-skills@skill-publish -g -y`
+5. **Ready to publish?** — If the `better-skill-publish` skill is installed, use it to wrap this into a complete GitHub repo with README, LICENSE, plugin.json, and marketplace.json.
+   If not installed: `npx skills add psylch/better-skills@better-skill-publish -g -y`
 
 ## References
 
@@ -134,4 +134,4 @@ For skill design conventions — output formats, error handling, environment str
 
 For common quality issues and how to avoid them, read `references/improvement_patterns.md`.
 
-For what automated validation checks will be run (by skill-review), read `references/validation_rules.md`.
+For what automated validation checks will be run (by better-skill-review), read `references/validation_rules.md`.

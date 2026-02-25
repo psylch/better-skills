@@ -8,9 +8,9 @@
 
 | 技能 | 用途 | 状态 |
 |------|------|------|
-| [**skill-creator**](skills/skill-creator/) | 从最佳实践模板创建新技能 | 可用 |
-| [**skill-review**](skills/skill-review/) | 验证结构、建议改进并修复问题 | 可用 |
-| [**skill-publish**](skills/skill-publish/) | 包装并发布技能 | 可用 |
+| [**better-skill-creator**](skills/better-skill-creator/) | 从最佳实践模板创建新技能 | 可用 |
+| [**better-skill-review**](skills/better-skill-review/) | 验证结构、建议改进并修复问题 | 可用 |
+| [**better-skill-publish**](skills/better-skill-publish/) | 包装并发布技能 | 可用 |
 
 ## 安装
 
@@ -35,15 +35,15 @@ git clone https://github.com/psylch/better-skills.git ~/.claude/skills/better-sk
 
 ## 包含内容
 
-### skill-creator
+### better-skill-creator
 
 通过对话引导创建新技能 — 名称、层级（L0/L0+/L1）、环境策略（stdlib/uv/venv）、输出目录。生成的模板内置 preflight 框架、JSON 输出约定和错误处理。
 
-### skill-review
+### better-skill-review
 
 结合自动化验证（7 类 22+ 项检查，A–F 评级）与基于最佳实践的分析建议。输出统一报告：评级、问题列表、按优先级排序的改进建议（附 before/after 示例），支持交互式修复。
 
-### skill-publish
+### better-skill-publish
 
 将技能打包为完整的 GitHub 仓库：生成 README（中英文）、LICENSE、plugin.json、marketplace.json、.gitignore。可选初始化 git 并创建 GitHub 仓库。
 
@@ -64,9 +64,9 @@ better-skills/
 │   └── marketplace.json
 ├── skills/
 │   ├── references/            # 共享知识库（symlink 到各 skill）
-│   ├── skill-creator/        # L1: scaffold.py + 模板
-│   ├── skill-review/         # L1: validate.py + analyze.sh
-│   └── skill-publish/        # L1: publish.py + 模板
+│   ├── better-skill-creator/        # L1: scaffold.py + 模板
+│   ├── better-skill-review/         # L1: validate.py + analyze.sh
+│   └── better-skill-publish/        # L1: publish.py + 模板
 ├── README.md
 ├── README.zh.md
 └── LICENSE

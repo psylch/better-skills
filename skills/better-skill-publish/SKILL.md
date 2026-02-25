@@ -1,5 +1,5 @@
 ---
-name: skill-publish
+name: better-skill-publish
 description: "Package a agent skill into a complete GitHub repository ready for distribution via skills.sh. Generates README, LICENSE, plugin.json, marketplace.json, .gitignore, and the proper directory structure. Optionally initializes a git repo and creates a GitHub repository. This skill should be used when publishing a skill, packaging a skill for distribution, preparing a skill repo, or when the user says 'publish skill', 'package skill', 'release skill', '发布技能', '打包 skill'."
 ---
 
@@ -16,7 +16,7 @@ Package a agent skill into a complete, distributable GitHub repository. Generate
 ## How It Works
 
 1. Identify the skill to publish
-2. Optionally review first with skill-review
+2. Optionally review first with better-skill-review
 3. Collect publishing metadata through dialogue
 4. Generate the repository structure with `publish.py`
 5. Optionally initialize git and create GitHub repo
@@ -42,9 +42,9 @@ Accept the skill location in multiple forms:
 
 ### Step 2: Pre-Publish Validation
 
-Check for `skill-review` availability:
-1. First try: `{SKILL_DIR}/../skill-review/scripts/validate.py`
-2. Fallback: `~/.agents/skills/skill-review/scripts/validate.py`
+Check for `better-skill-review` availability:
+1. First try: `{SKILL_DIR}/../better-skill-review/scripts/validate.py`
+2. Fallback: `~/.agents/skills/better-skill-review/scripts/validate.py`
 
 If found, suggest running validation:
 
@@ -54,8 +54,8 @@ python3 <validate.py path> run --path <skill-path>
 
 If there are failures, recommend fixing them before proceeding. Warnings are acceptable.
 
-If skill-review is not available, offer:
-- A) Install it: `npx skills add psylch/better-skills@skill-review -g -y`
+If better-skill-review is not available, offer:
+- A) Install it: `npx skills add psylch/better-skills@better-skill-review -g -y`
 - B) Continue without it (quick manual check: verify SKILL.md exists with valid frontmatter)
 - C) Cancel
 
