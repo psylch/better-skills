@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """Validate a agent skill directory against best-practice conventions.
 
-Checks structure, naming, content quality, path integrity, script conventions,
-security patterns, and completeness. Outputs a graded JSON report.
+Checks structure, naming, content quality, path integrity, security patterns,
+and completeness. Outputs hard-rule verdicts and soft findings for agent review.
 
 Usage:
     validate.py preflight
@@ -53,15 +53,31 @@ def parse_frontmatter(text):
 
 
 # ---------------------------------------------------------------------------
-# Individual checks
+# Result builders
 # ---------------------------------------------------------------------------
 
 def check_result(check_id, category, severity, message, fix=None):
+    """Build a hard-rule check result (pass/warn/fail verdict)."""
     r = {"id": check_id, "category": category, "severity": severity, "message": message}
     if fix:
         r["fix"] = fix
     return r
 
+
+def finding_result(finding_id, category, data, context_hint):
+    """Build a soft finding (data only, no verdict — agent judges context)."""
+    return {
+        "id": finding_id,
+        "category": category,
+        "type": "finding",
+        "data": data,
+        "context_hint": context_hint,
+    }
+
+
+# ---------------------------------------------------------------------------
+# Hard-rule checks (script produces verdicts)
+# ---------------------------------------------------------------------------
 
 def checks_structure(skill_path, content, fm):
     """Structure checks: SKILL.md exists, frontmatter, required fields."""
@@ -147,7 +163,7 @@ def checks_naming(skill_path, fm):
     dir_name = skill_path.name
     if name == dir_name:
         results.append(check_result("name_matches_directory", "naming", "pass",
-                                    f"Frontmatter name matches directory name"))
+                                    "Frontmatter name matches directory name"))
     else:
         results.append(check_result("name_matches_directory", "naming", "warn",
                                     f"Frontmatter name '{name}' differs from directory '{dir_name}'",
@@ -156,7 +172,7 @@ def checks_naming(skill_path, fm):
 
 
 def checks_content(content, fm):
-    """Content quality checks: quantitative metrics only (no keyword guessing)."""
+    """Content quality checks: quantitative metrics only."""
     results = []
     if not fm:
         return results
@@ -170,7 +186,6 @@ def checks_content(content, fm):
                                     f"Description is only {len(desc)} chars (recommend ≥50)",
                                     "Add more detail about what the skill does and when to use it"))
 
-    # SKILL.md body length — too short means insufficient instructions for Claude
     body = re.sub(r'^---.*?---\s*', '', content, count=1, flags=re.DOTALL).strip()
     body_lines = len(body.splitlines())
     if body_lines < 10:
@@ -181,7 +196,6 @@ def checks_content(content, fm):
         results.append(check_result("body_length", "content", "pass",
                                     f"SKILL.md body: {body_lines} lines"))
 
-    # SKILL.md heading count — skills with no headings lack structure
     headings = re.findall(r'^#{1,4}\s+.+', content, re.MULTILINE)
     if len(headings) < 2:
         results.append(check_result("heading_structure", "content", "warn",
@@ -196,9 +210,7 @@ def checks_content(content, fm):
 
 def strip_code_spans(text):
     """Remove fenced code blocks and inline backtick spans from markdown."""
-    # Remove fenced code blocks
     text = re.sub(r'```[^`]*```', '', text, flags=re.DOTALL)
-    # Remove inline code spans (backtick-wrapped)
     text = re.sub(r'`[^`]+`', '', text)
     return text
 
@@ -207,9 +219,6 @@ def checks_paths(skill_path, content):
     """Path integrity checks: referenced files exist, scripts executable."""
     results = []
 
-    # Extract file paths referenced in SKILL.md prose (not code blocks or inline code).
-    # Inline code and code blocks often describe paths in *generated* skills, not
-    # files that must exist in the current skill directory.
     prose = strip_code_spans(content)
     path_pattern = r'(?:scripts|references|assets)/[\w./-]+'
     referenced = set(re.findall(path_pattern, prose))
@@ -231,7 +240,6 @@ def checks_paths(skill_path, content):
         results.append(check_result("referenced_files_exist", "paths", "pass",
                                     "No file paths referenced in SKILL.md"))
 
-    # Check .sh files have execute permission
     scripts_dir = skill_path / "scripts"
     if scripts_dir.exists():
         sh_files = list(scripts_dir.glob("*.sh"))
@@ -252,69 +260,11 @@ def checks_paths(skill_path, content):
     return results
 
 
-def checks_scripts(skill_path):
-    """Script convention checks: JSON output, preflight, error handling, exit codes."""
-    results = []
-    scripts_dir = skill_path / "scripts"
-    if not scripts_dir.exists():
-        return results
-
-    script_files = list(scripts_dir.glob("*.py")) + list(scripts_dir.glob("*.sh"))
-    if not script_files:
-        return results
-
-    all_content = ""
-    for sf in script_files:
-        try:
-            all_content += sf.read_text(encoding='utf-8', errors='replace')
-        except Exception:
-            pass
-
-    # JSON output pattern
-    json_patterns = ["json.dumps", "json.dump", 'echo \'{"', "| jq", "jq '.", 'jq ".',
-                     '{"status":', '"status": "ok"', "json_ok", "json_error"]
-    if any(p in all_content for p in json_patterns):
-        results.append(check_result("script_json_output", "scripts", "pass",
-                                    "Scripts use JSON output pattern"))
-    else:
-        results.append(check_result("script_json_output", "scripts", "warn",
-                                    "No JSON output pattern detected in scripts",
-                                    "Use json.dumps() for Python or echo '{...}' for bash to output structured JSON"))
-
-    # Preflight subcommand
-    if "preflight" in all_content:
-        results.append(check_result("script_preflight", "scripts", "pass",
-                                    "Scripts implement preflight subcommand"))
-    else:
-        results.append(check_result("script_preflight", "scripts", "warn",
-                                    "No preflight subcommand found",
-                                    "Add a 'preflight' subcommand that checks environment readiness"))
-
-    # Error handling (stderr)
-    if "sys.stderr" in all_content or ">&2" in all_content or "file=sys.stderr" in all_content:
-        results.append(check_result("script_error_handling", "scripts", "pass",
-                                    "Scripts write errors to stderr"))
-    else:
-        results.append(check_result("script_error_handling", "scripts", "warn",
-                                    "No stderr error output pattern detected",
-                                    "Write error JSON to stderr: print(..., file=sys.stderr) or echo ... >&2"))
-
-    # Exit codes
-    if re.search(r'sys\.exit\(\s*[12]\s*\)|sys\.exit\(.+\belse\b.+\)|exit\s+[12]', all_content):
-        results.append(check_result("script_exit_codes", "scripts", "pass",
-                                    "Scripts use proper exit codes (1=recoverable, 2=fatal)"))
-    else:
-        results.append(check_result("script_exit_codes", "scripts", "warn",
-                                    "No exit code convention detected (exit 1/2)",
-                                    "Use exit 0 for success, exit 1 for recoverable errors, exit 2 for fatal errors"))
-    return results
-
-
-def checks_security(skill_path, content):
-    """Security checks: hardcoded paths, secrets, PII."""
+def checks_security_hard(skill_path, content):
+    """Hard security checks: secrets only (unambiguous)."""
     results = []
 
-    # Collect all text from SKILL.md + scripts + references
+    # Collect all text
     all_text = content
     for subdir in ("scripts", "references"):
         d = skill_path / subdir
@@ -326,21 +276,7 @@ def checks_security(skill_path, content):
                     except Exception:
                         pass
 
-    # Hardcoded user paths
-    path_patterns = [r'/Users/\w+', r'/home/\w+', r'C:\\Users\\\w+', r'/mnt/c/Users/\w+']
-    found_paths = []
-    for pat in path_patterns:
-        found_paths.extend(re.findall(pat, all_text))
-    if found_paths:
-        unique = list(set(found_paths))[:3]
-        results.append(check_result("no_hardcoded_paths", "security", "warn",
-                                    f"Hardcoded user paths found: {', '.join(unique)}",
-                                    "Replace with relative paths or environment variables"))
-    else:
-        results.append(check_result("no_hardcoded_paths", "security", "pass",
-                                    "No hardcoded user paths detected"))
-
-    # Secret patterns
+    # Secret patterns — always a hard fail, no context needed
     secret_patterns = [
         (r'sk-[a-zA-Z0-9]{20,}', "OpenAI API key"),
         (r'ghp_[a-zA-Z0-9]{36,}', "GitHub personal access token"),
@@ -360,34 +296,7 @@ def checks_security(skill_path, content):
         results.append(check_result("no_secrets", "security", "pass",
                                     "No secret patterns detected"))
 
-    # PII (email patterns)
-    emails = re.findall(r'[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}', all_text)
-    # Filter out common non-PII emails
-    non_pii = {"noreply@anthropic.com", "noreply@github.com", "example@example.com"}
-    real_emails = [e for e in emails if e not in non_pii and "example" not in e.lower()]
-    if real_emails:
-        results.append(check_result("no_pii", "security", "warn",
-                                    f"Possible PII (email addresses): {', '.join(list(set(real_emails))[:3])}",
-                                    "Remove personal email addresses for public distribution"))
-    else:
-        results.append(check_result("no_pii", "security", "pass",
-                                    "No PII patterns detected"))
-    return results
-
-
-def checks_completeness(content):
-    """Completeness checks: TODO placeholders, template markers."""
-    results = []
-
-    todo_count = len(re.findall(r'\bTODO\b', content))
-    if todo_count > 0:
-        results.append(check_result("no_todo_placeholders", "completeness", "warn",
-                                    f"Found {todo_count} TODO placeholder(s)",
-                                    "Replace TODO markers with actual content"))
-    else:
-        results.append(check_result("no_todo_placeholders", "completeness", "pass",
-                                    "No TODO placeholders"))
-
+    # Template placeholders — always a hard fail
     template_count = len(re.findall(r'\{\{[A-Z_]+\}\}', content))
     if template_count > 0:
         results.append(check_result("no_template_placeholders", "completeness", "fail",
@@ -396,25 +305,148 @@ def checks_completeness(content):
     else:
         results.append(check_result("no_template_placeholders", "completeness", "pass",
                                     "No template placeholders"))
+
     return results
+
+
+# ---------------------------------------------------------------------------
+# Soft findings (script detects, agent judges)
+# ---------------------------------------------------------------------------
+
+def collect_findings(skill_path, content):
+    """Collect contextual findings that need agent judgment."""
+    findings = []
+
+    # --- TODO markers ---
+    todo_locations = []
+    for fpath in _iter_skill_files(skill_path):
+        try:
+            lines = fpath.read_text(encoding='utf-8', errors='replace').splitlines()
+        except Exception:
+            continue
+        rel = str(fpath.relative_to(skill_path))
+        for i, line in enumerate(lines, 1):
+            if re.search(r'\bTODO\b', line):
+                todo_locations.append(f"{rel}:{i}")
+
+    if todo_locations:
+        findings.append(finding_result(
+            "todo_markers", "completeness",
+            {"count": len(todo_locations), "locations": todo_locations},
+            "TODOs in .tmpl template files are intentional scaffolding — not issues. "
+            "TODOs in SKILL.md body or script logic are likely unfinished work."
+        ))
+
+    # --- Hardcoded user paths ---
+    path_locations = []
+    path_patterns = [r'/Users/\w+', r'/home/\w+', r'C:\\Users\\\w+', r'/mnt/c/Users/\w+']
+    for fpath in _iter_skill_files(skill_path):
+        try:
+            lines = fpath.read_text(encoding='utf-8', errors='replace').splitlines()
+        except Exception:
+            continue
+        rel = str(fpath.relative_to(skill_path))
+        for i, line in enumerate(lines, 1):
+            for pat in path_patterns:
+                if re.search(pat, line):
+                    path_locations.append(f"{rel}:{i}")
+                    break
+
+    if path_locations:
+        findings.append(finding_result(
+            "hardcoded_paths", "security",
+            {"count": len(path_locations), "locations": path_locations},
+            "Paths in references/ docs may be illustrative examples — acceptable. "
+            "Paths in scripts or SKILL.md prose are likely real issues."
+        ))
+
+    # --- PII (email addresses) ---
+    all_text = _read_all_text(skill_path, content)
+    emails = re.findall(r'[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}', all_text)
+    non_pii = {"noreply@anthropic.com", "noreply@github.com", "example@example.com"}
+    real_emails = [e for e in emails if e not in non_pii and "example" not in e.lower()]
+    if real_emails:
+        findings.append(finding_result(
+            "pii_patterns", "security",
+            {"emails": list(set(real_emails))[:5]},
+            "Emails in .env.example or documentation as placeholders are fine. "
+            "Real personal emails in scripts or published content are PII concerns."
+        ))
+
+    # --- Script convention patterns (only meaningful for L0+/L1 with scripts) ---
+    scripts_dir = skill_path / "scripts"
+    if scripts_dir.exists():
+        script_files = list(scripts_dir.glob("*.py")) + list(scripts_dir.glob("*.sh"))
+        if script_files:
+            all_script_content = ""
+            for sf in script_files:
+                try:
+                    all_script_content += sf.read_text(encoding='utf-8', errors='replace')
+                except Exception:
+                    pass
+
+            json_patterns = ["json.dumps", "json.dump", 'echo \'{"', "| jq", "jq '.", 'jq ".',
+                             '{"status":', '"status": "ok"', "json_ok", "json_error"]
+            has_json = any(p in all_script_content for p in json_patterns)
+            has_preflight = "preflight" in all_script_content
+            has_stderr = ("sys.stderr" in all_script_content or ">&2" in all_script_content
+                          or "file=sys.stderr" in all_script_content)
+            has_exit_codes = bool(re.search(
+                r'sys\.exit\(\s*[12]\s*\)|sys\.exit\(.+\belse\b.+\)|exit\s+[12]',
+                all_script_content))
+
+            findings.append(finding_result(
+                "script_conventions", "scripts",
+                {
+                    "has_json_output": has_json,
+                    "has_preflight": has_preflight,
+                    "has_error_handling": has_stderr,
+                    "has_exit_codes": has_exit_codes,
+                },
+                "Only applicable to skills with scripts (L0+/L1). "
+                "L0 pure-prompt skills without scripts should skip this entirely."
+            ))
+
+    return findings
+
+
+def _iter_skill_files(skill_path):
+    """Yield all reviewable files in a skill directory."""
+    for f in skill_path.rglob("*"):
+        if f.is_file() and f.suffix in ('.py', '.sh', '.md', '.txt', '.json', '.yaml', '.yml', '.env', '.tmpl'):
+            yield f
+
+
+def _read_all_text(skill_path, content):
+    """Read all text content from skill for pattern matching."""
+    all_text = content
+    for subdir in ("scripts", "references"):
+        d = skill_path / subdir
+        if d.exists():
+            for f in d.rglob("*"):
+                if f.is_file() and f.suffix in ('.py', '.sh', '.md', '.txt', '.json', '.yaml', '.yml', '.env'):
+                    try:
+                        all_text += "\n" + f.read_text(encoding='utf-8', errors='replace')
+                    except Exception:
+                        pass
+    return all_text
 
 
 # ---------------------------------------------------------------------------
 # Main validation runner
 # ---------------------------------------------------------------------------
 
-ALL_CATEGORIES = ["structure", "naming", "content", "paths", "scripts", "security", "completeness"]
+ALL_CATEGORIES = ["structure", "naming", "content", "paths", "security", "completeness"]
 
 
 def compute_grade(checks, strict):
-    """Compute letter grade from check results."""
+    """Compute letter grade from hard-rule check results only."""
     fails = sum(1 for c in checks if c["severity"] == "fail")
     warns = sum(1 for c in checks if c["severity"] == "warn")
     if strict:
         fails += warns
         warns = 0
 
-    # Check if SKILL.md is missing (F grade)
     skill_md_check = next((c for c in checks if c["id"] == "skill_md_exists"), None)
     if skill_md_check and skill_md_check["severity"] == "fail":
         return "F"
@@ -446,7 +478,7 @@ def run_validation(skill_path, fmt, strict, categories):
         content = skill_md.read_text(encoding='utf-8', errors='replace')
         fm = parse_frontmatter(content)
 
-    # Run checks by category
+    # Run hard-rule checks
     all_checks = []
     cat_set = set(categories) if categories else set(ALL_CATEGORIES)
 
@@ -458,12 +490,11 @@ def run_validation(skill_path, fmt, strict, categories):
         all_checks.extend(checks_content(content, fm))
     if "paths" in cat_set:
         all_checks.extend(checks_paths(skill_path, content))
-    if "scripts" in cat_set:
-        all_checks.extend(checks_scripts(skill_path))
     if "security" in cat_set:
-        all_checks.extend(checks_security(skill_path, content))
-    if "completeness" in cat_set:
-        all_checks.extend(checks_completeness(content))
+        all_checks.extend(checks_security_hard(skill_path, content))
+
+    # Collect soft findings
+    findings = collect_findings(skill_path, content)
 
     total = len(all_checks)
     passes = sum(1 for c in all_checks if c["severity"] == "pass")
@@ -480,13 +511,15 @@ def run_validation(skill_path, fmt, strict, categories):
     }
 
     if fmt == "concise":
-        # Only include non-pass checks
         report["checks"] = [c for c in all_checks if c["severity"] != "pass"]
     else:
         report["checks"] = all_checks
 
+    # Always include findings (agent needs them for contextual review)
+    report["findings"] = findings
+
     report["hint"] = (f"{passes}/{total} checks passed, {warns} warning(s), {fails} failure(s). "
-                      f"Grade: {grade}.")
+                      f"Grade: {grade}. {len(findings)} finding(s) for agent review.")
     if strict and warns > 0:
         report["hint"] += " (strict mode: warnings treated as failures)"
 
