@@ -373,6 +373,34 @@ def collect_findings(skill_path, content):
             "Real personal emails in scripts or published content are PII concerns."
         ))
 
+    # --- Credential file safety (.gitignore coverage) ---
+    env_files = list(skill_path.rglob(".env")) + list(skill_path.rglob(".env.*"))
+    env_example = list(skill_path.rglob(".env.example"))
+    real_env = [f for f in env_files if f not in env_example and f.name != ".env.example"]
+    if real_env:
+        # Check if .gitignore covers .env
+        gitignore_covers = False
+        for gi_path in [skill_path / ".gitignore",
+                        skill_path.parent / ".gitignore",
+                        skill_path.parent.parent / ".gitignore"]:
+            if gi_path.exists():
+                try:
+                    gi_content = gi_path.read_text(encoding="utf-8", errors="replace")
+                    if any(pat in gi_content for pat in [".env", "*.env"]):
+                        gitignore_covers = True
+                        break
+                except Exception:
+                    pass
+
+        if not gitignore_covers:
+            findings.append(finding_result(
+                "env_without_gitignore", "security",
+                {"env_files": [str(f.relative_to(skill_path)) for f in real_env]},
+                ".env files found but no .gitignore coverage detected. "
+                "If this skill is in a git repo, credentials may be committed. "
+                "Check if .gitignore at repo root covers .env files."
+            ))
+
     # --- Script convention patterns (only meaningful for L0+/L1 with scripts) ---
     scripts_dir = skill_path / "scripts"
     if scripts_dir.exists():

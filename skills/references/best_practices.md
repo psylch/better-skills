@@ -126,6 +126,130 @@ After the user chooses, write the `.env` file to the selected location. On subse
 | **Disable service** | User explicitly opts out | No TIDAL membership → disable TIDAL source |
 | **Halt & guide** | Hard dependency, no alternative | Quark APP not running → tell user to launch it |
 
+## Setup Flow Integrity
+
+The setup/onboarding flow is the most fragile part of any skill. A first-time user who hits a dead end during setup will never use the skill again. This section covers patterns that go beyond "does preflight exist" to "does the setup actually work end-to-end."
+
+### Bootstrap Safety
+
+Preflight must NOT depend on the tools it checks. This is the #1 setup UX bug.
+
+**Anti-pattern (circular dependency):**
+```bash
+cmd_preflight() {
+  # Uses jq to format output — but jq is one of the deps we're checking!
+  jq -n --argjson ready "$ready" --argjson jq_dep "$jq_status" '...'
+}
+```
+
+**Fix:** Use printf/echo for preflight output when a checked dependency is also used for formatting:
+```bash
+cmd_preflight() {
+  if ! command -v jq &>/dev/null; then
+    printf '{"ready":false,"dependencies":{"jq":{"status":"missing","hint":"brew install jq"}}}\n'
+    return
+  fi
+  jq -n '...'  # Safe — jq is confirmed available
+}
+```
+
+### Live Validation vs Existence Checks
+
+Checking that a credential **exists** is not the same as checking that it **works**.
+
+| Level | What it checks | Catches |
+|-------|---------------|---------|
+| Existence | Env var is non-empty | Missing config |
+| Format | Value matches expected pattern | Typos, wrong field |
+| **Live validation** | Actual API call succeeds | Expired tokens, wrong permissions, revoked keys |
+
+Preflight should do **at minimum** existence checks. For credentials that are easy to validate (API keys with a lightweight endpoint), do live validation. For credentials that are expensive to validate (OAuth tokens requiring refresh), existence + format is acceptable.
+
+**Example — testing actual capability:**
+```bash
+# BAD: only checks if variable exists
+[[ -n "$CF_API_TOKEN" ]] && token_status="configured"
+
+# GOOD: tests actual API access
+if curl -s -H "Authorization: Bearer $CF_API_TOKEN" \
+   "https://api.cloudflare.com/client/v4/zones?per_page=1" | jq -e '.success' &>/dev/null; then
+  token_status="valid"
+fi
+```
+
+### Credential Security Checklist
+
+| Check | Why | How to verify |
+|-------|-----|--------------|
+| `.gitignore` covers `.env` | Prevents credential leaks in git | Check repo root AND skill directory for `.gitignore` |
+| No passwords in CLI args | `ps` and shell history expose them | Grep for `--password`, `--token` in argparse definitions |
+| No secrets in committed files | Even in "local" dirs | Check git status for tracked `.env` files |
+| `.env.example` has placeholders only | Template shouldn't have real values | Check `.env.example` for real-looking tokens |
+
+### Setup Separation Patterns
+
+**Good:** Setup is a distinct phase, triggered only when preflight fails.
+```
+User triggers skill → Preflight → ready: true → Business workflow
+                                → ready: false → Setup flow → Re-preflight → Business workflow
+```
+
+**Bad:** Setup mixed into business workflow.
+```
+User triggers skill → Start research → Mid-way discover Grok needs setup
+                   → Mutate ~/.claude.json → Ask user to restart → Continue with degraded mode
+```
+
+### Error Recovery: Token Expiration
+
+Scripts that cache tokens must handle expiration gracefully:
+
+```python
+# BAD: cached token exists → use it → fail → die
+if cached_token:
+    client = Client(token=cached_token)
+    if not client.is_valid():
+        die("Login failed")  # Never tries fresh login!
+
+# GOOD: cached token → try → fail → fallback to fresh login → update cache
+if cached_token:
+    client = Client(token=cached_token)
+    if client.is_valid():
+        return client
+# Fall through to fresh login
+if email and password:
+    client = Client.login(email, password)
+    cache_token(client.token)
+    return client
+die("No valid credentials")
+```
+
+### Single Canonical Configuration Path
+
+Error messages and SKILL.md must agree on HOW to configure credentials. Having both `.env` editing and `config set` CLI commands creates confusion when they store to different locations or have different precedence.
+
+**Pick one canonical path and make everything point to it.** If `.env` is the primary method, error hints should say "Edit ~/.claude/skill-name/.env" — not "Run: script config set --key VALUE".
+
+### Config Safety (for Setup/Installation Skills)
+
+L0 skills that write config files (terminal setups, editor configs) must:
+
+1. **Check for existing files** before writing
+2. **Show the user** what exists and what will change
+3. **Offer choices**: backup & replace, merge, or skip
+4. **Provide rollback guidance** if the new config breaks things
+
+```markdown
+Before writing, check if the config file already exists.
+If it exists:
+  a) Back up to <file>.backup.<timestamp>
+  b) Show the user the diff between existing and proposed config
+  c) Ask: (A) Replace with backup, (B) Skip this step, (C) Merge manually
+If the new config breaks the shell/terminal:
+  → Document how to restore: cp <file>.backup.<timestamp> <file>
+  → Document how to open a fallback shell/terminal
+```
+
 ## Token Awareness
 
 - Support `--limit N` for paginated results

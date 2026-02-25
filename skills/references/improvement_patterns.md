@@ -170,6 +170,38 @@ Both use the same discovery pattern: project-level (`<cwd>/.baoyu-skills/<skill>
 **Why:** Users expect responses in their own language. A skill that always replies in English alienates Chinese-speaking users, and vice versa.
 **Fix:** Add a Language section at the top of SKILL.md: `**Match user's language**: Respond in the same language the user uses.`
 
+## Setup Flow Integrity
+
+### Preflight circular dependency (bootstrap safety)
+**Look for:** Preflight command uses a tool/library to format output that is itself one of the dependencies being checked.
+**Why:** If the tool is missing, preflight crashes before it can report the problem. The user gets an opaque shell error instead of actionable guidance.
+**Fix:** Use plain printf/echo for output when checked dependencies are also used for formatting. Only use the dependency after confirming it's available.
+
+### Preflight only checks existence, not validity
+**Look for:** Preflight checks `if env_var is not empty` but never makes a test API call or login attempt.
+**Why:** A user could enter wrong credentials, pass preflight, and only discover the error on first real use. First-time UX is ruined.
+**Fix:** Add a lightweight live validation step — one API call per credential. If too expensive, at least validate format (regex pattern match).
+
+### Missing .gitignore for credential files
+**Look for:** Skill directory or repo root has no `.gitignore`, or `.gitignore` doesn't cover `.env` files.
+**Why:** `.env` files containing API keys or passwords will be committed and potentially pushed to public repos.
+**Fix:** Add `.gitignore` with `.env`, `.env.*`, `*.pyc`, `__pycache__/`, `.cache/`.
+
+### Dual-path credential confusion
+**Look for:** SKILL.md says "edit .env file" but script error messages say "run: script config set --key VALUE". Or multiple config locations with unclear precedence.
+**Why:** Users and Claude get conflicting guidance. One path may work while the other silently does nothing.
+**Fix:** Pick one canonical configuration method. Make all error messages, SKILL.md, and help text point to the same method.
+
+### Config overwrite without backup (setup skills)
+**Look for:** L0 setup skills that write config files (mkdir -p + write) without checking if files already exist.
+**Why:** Users lose their existing customizations with no warning and no way to recover.
+**Fix:** Check for existing files, offer backup/skip/merge, provide rollback instructions.
+
+### Stale token not falling back to fresh login
+**Look for:** Scripts that cache auth tokens and use cached token directly without fallback to re-authentication when the cached token expires.
+**Why:** Token expiration is inevitable. If the code doesn't fall back to email/password re-login, users hit a dead end with "login failed" even though valid credentials exist.
+**Fix:** Try cached token → on failure, try fresh login with stored credentials → only die if both fail.
+
 ## Security
 
 ### Hardcoded user paths

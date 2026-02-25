@@ -117,6 +117,23 @@ Read the workflow/process sections.
 
 → Reference: `references/best_practices.md` § Script Output Convention, § Token Awareness
 
+#### 5.6 Setup Flow Integrity (/3)
+
+**Applicability:** Applies to any skill that has a setup/preflight/configuration phase — including L0 setup skills (like terminal config wizards) and all L0+/L1 skills with scripts. Score 3 automatically ONLY for L0 skills that have no setup phase at all (e.g., pure research/informational skills).
+
+This dimension evaluates whether a first-time user can go from zero to working without hitting dead ends. **Do not just check if pieces exist — trace the actual flow.**
+
+- [ ] **Bootstrap safety**: Preflight does NOT depend on tools it's supposed to detect. (e.g., using `jq` to report `jq` is missing = circular dependency = 0 points)
+- [ ] **Check-Fix completeness**: Every preflight check maps to a specific, actionable fix in SKILL.md — not just "check failed". Fix instructions include platform-specific commands.
+- [ ] **Live validation**: Preflight tests that credentials/services actually work, not just that config values exist. (e.g., test API call, not just "env var is set")
+- [ ] **Credential security**: `.gitignore` covers `.env` and sensitive files. No passwords passed via CLI args (shell history exposure). No plaintext secrets in committed files.
+- [ ] **Setup separation**: First-time setup is clearly distinct from every-run workflow. No config mutations without user consent.
+- [ ] **Error recovery**: Token/session expiration detected with clear re-auth guidance. Partial failures don't leave the skill in a broken state.
+- [ ] **Single canonical path**: Only one way to configure credentials — not `.env` AND `config set` giving conflicting guidance in error messages.
+- [ ] **Config safety** (for setup skills): Existing config files are detected and backed up before overwriting. User is offered backup/skip/merge choices.
+
+→ Reference: `references/best_practices.md` § Setup Flow Integrity
+
 #### 5.5 UX Practices (/3)
 
 **Check the Applicability Matrix first** — only evaluate practices that apply to this skill. A missing practice with no applicable condition is the expected state, not a problem.
@@ -160,8 +177,9 @@ Findings (agent-reviewed):
 5.3 Runtime Robustness:     <score>/3  <one-line assessment>
 5.4 Script Quality:         <score>/3  <one-line assessment>
 5.5 UX Practices:           <score>/3  <one-line assessment>
+5.6 Setup Flow Integrity:   <score>/3  <one-line assessment>
                             ─────────
-Semantic Score:             <total>/15
+Semantic Score:             <total>/18
 
 ═══ Improvement Suggestions ═══
 For each dimension scoring < 3, provide:
@@ -171,7 +189,7 @@ For each dimension scoring < 3, provide:
   4. Priority: High (functionality/UX) / Medium (convention) / Low (polish)
 ```
 
-If linter grade is A and semantic score ≥ 12: congratulate and suggest publishing with `better-skill-publish`.
+If linter grade is A and semantic score ≥ 15: congratulate and suggest publishing with `better-skill-publish`.
 
 ### Step 7: Interactive Improvement
 
