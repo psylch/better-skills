@@ -37,7 +37,9 @@ git clone https://github.com/psylch/better-skills.git ~/.claude/skills/better-sk
 
 ### better-skill-creator
 
-通过对话引导创建新技能 — 名称、层级（L0/L0+/L1）、环境策略（stdlib/uv/venv）、输出目录。生成的模板内置 preflight 框架、JSON 输出约定和错误处理。
+以需求优先的工作流引导创建新技能 — 先理解技能用途，再自动推荐层级（L0/L0+/L1）和环境策略（stdlib/uv/venv）。生成的模板内置 preflight 框架、JSON 输出约定和错误处理。包含内建结构验证，创建后立即检查结构完整性。
+
+融合了 [Vercel skill-creator](https://github.com/vercel-labs/agent-browser) 的设计理念 — 需求收集先于结构决策、context 预算意识、指令自由度匹配 — 结合我们更深层的运行时约定（preflight、JSON 输出契约、环境策略、setup flow 完整性）。
 
 ### better-skill-review
 

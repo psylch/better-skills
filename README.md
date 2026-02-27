@@ -37,7 +37,9 @@ Restart your agent after installation.
 
 ### better-skill-creator
 
-Guides you through creating a new skill via interactive dialogue — name, level (L0/L0+/L1), environment strategy (stdlib/uv/venv), and output directory. Generates ready-to-edit templates with preflight framework, JSON output conventions, and error handling baked in.
+Guides you through creating a new skill with a requirements-first workflow — understands what your skill does before making structural decisions, then auto-recommends a level (L0/L0+/L1) and environment strategy (stdlib/uv/venv). Generates ready-to-edit templates with preflight framework, JSON output conventions, and error handling baked in. Includes built-in post-scaffold validation to catch structural issues immediately.
+
+Incorporates design principles from [Vercel's skill-creator](https://github.com/vercel-labs/agent-browser) — requirements gathering before structural choices, context budget awareness, and degrees of freedom matching — combined with our deeper runtime conventions (preflight, JSON output contracts, environment strategies, setup flow integrity).
 
 ### better-skill-review
 

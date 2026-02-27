@@ -104,6 +104,14 @@ def scaffold(name, level, env, output_dir, force, templates_dir):
     gitkeep.touch()
     created.append(str(gitkeep.relative_to(output_dir)))
 
+    # L0+ and L1: create assets/.gitkeep (non-context files: templates, images, fonts)
+    if level in ('l0plus', 'l1'):
+        assets_dir = skill_dir / 'assets'
+        assets_dir.mkdir(parents=True, exist_ok=True)
+        assets_gitkeep = assets_dir / '.gitkeep'
+        assets_gitkeep.touch()
+        created.append(str(assets_gitkeep.relative_to(output_dir)))
+
     # L0+ and L1: create scripts
     if level == 'l0plus':
         scripts_dir.mkdir(parents=True, exist_ok=True)
@@ -161,6 +169,66 @@ def scaffold(name, level, env, output_dir, force, templates_dir):
     })
 
 
+def cmd_validate(args):
+    """Validate a generated skill's structural integrity."""
+    skill_path = Path(args.path).resolve()
+    if not skill_path.exists():
+        error("not_found", f"Path does not exist: {skill_path}", recoverable=False)
+
+    warnings = []
+
+    # Check SKILL.md exists and has frontmatter
+    skill_md = skill_path / 'SKILL.md'
+    if not skill_md.exists():
+        error("missing_skill_md", "SKILL.md not found", recoverable=False)
+
+    content = skill_md.read_text(encoding='utf-8')
+
+    # Check frontmatter
+    if not content.startswith('---'):
+        warnings.append("SKILL.md missing frontmatter (should start with ---)")
+    else:
+        fm_end = content.find('---', 3)
+        if fm_end == -1:
+            warnings.append("SKILL.md frontmatter not closed (missing closing ---)")
+        else:
+            fm = content[3:fm_end]
+            if 'name:' not in fm:
+                warnings.append("Frontmatter missing 'name' field")
+            if 'description:' not in fm:
+                warnings.append("Frontmatter missing 'description' field")
+            if 'TODO' in fm:
+                warnings.append("Frontmatter still contains TODO placeholders — replace before publishing")
+
+    # Check unreplaced template tokens
+    import re as _re
+    tokens = _re.findall(r'\{\{[A-Z_]+\}\}', content)
+    if tokens:
+        warnings.append(f"Unreplaced template tokens found: {', '.join(set(tokens))}")
+
+    # Check line count (context budget)
+    line_count = len(content.splitlines())
+    if line_count > 200:
+        warnings.append(f"SKILL.md is {line_count} lines (recommended: ≤200). Move details to references/.")
+
+    # Check referenced directories exist
+    scripts_dir = skill_path / 'scripts'
+    if 'scripts/' in content and not scripts_dir.exists():
+        warnings.append("SKILL.md references scripts/ but the directory does not exist")
+
+    references_dir = skill_path / 'references'
+    if 'references/' in content and not references_dir.exists():
+        warnings.append("SKILL.md references references/ but the directory does not exist")
+
+    output({
+        "status": "ok" if not warnings else "warnings",
+        "path": str(skill_path),
+        "line_count": line_count,
+        "warnings": warnings,
+        "hint": "All structural checks passed." if not warnings else f"{len(warnings)} issue(s) found — review before publishing.",
+    })
+
+
 def cmd_preflight(_args):
     """Check environment readiness."""
     output({
@@ -198,6 +266,9 @@ def main():
 
     sub.add_parser("preflight", help="Check environment readiness")
 
+    validate_parser = sub.add_parser("validate", help="Validate a generated skill's structure")
+    validate_parser.add_argument('--path', required=True, help='Path to the skill directory to validate')
+
     scaffold_parser = sub.add_parser("scaffold", help="Generate skill from templates")
     scaffold_parser.add_argument('--name', required=True, help='Skill name (kebab-case, e.g. my-awesome-skill)')
     scaffold_parser.add_argument('--level', required=True, choices=['l0', 'l0plus', 'l1'],
@@ -214,6 +285,8 @@ def main():
 
     if args.command == "preflight":
         cmd_preflight(args)
+    elif args.command == "validate":
+        cmd_validate(args)
     elif args.command == "scaffold":
         cmd_scaffold(args)
 
